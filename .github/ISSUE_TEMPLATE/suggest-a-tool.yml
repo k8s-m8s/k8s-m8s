@@ -1,0 +1,63 @@
+name: Suggest a tool
+description: Propose a Kubernetes tool that is not listed yet.
+title: "[tool] "
+labels: ["new tool"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the suggestion.
+
+        A tool can only be added when its own maintainers publish a statement about which Kubernetes versions it works with. If there is no such statement, the tool cannot be listed yet, however widely it is used. See [CONTRIBUTING.md](https://github.com/k8s-m8s/k8s-m8s/blob/main/CONTRIBUTING.md).
+  - type: input
+    id: tool
+    attributes:
+      label: Tool
+      placeholder: Traefik
+    validations:
+      required: true
+  - type: input
+    id: repo
+    attributes:
+      label: Upstream repository
+      description: The tool's main source repository.
+      placeholder: https://github.com/traefik/traefik
+    validations:
+      required: true
+  - type: input
+    id: statement
+    attributes:
+      label: Link to the compatibility statement
+      description: Where the maintainers say which Kubernetes versions each tool version supports or was tested on. It must be in the tool's own repository, documentation or release notes. Leave blank if you could not find one.
+      placeholder: https://github.com/example/tool/blob/main/docs/compatibility.md
+    validations:
+      required: false
+  - type: dropdown
+    id: form
+    attributes:
+      label: What does the statement give?
+      description: Pick the closest. This helps judge how the tool would be recorded.
+      options:
+        - Tested Kubernetes versions for each tool version
+        - A supported or expected range for each tool version
+        - Only a minimum Kubernetes version
+        - Something else, or not sure
+        - I could not find a statement
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      description: For example where else you looked, or why the tool matters to you.
+    validations:
+      required: false
+  - type: dropdown
+    id: maintainer
+    attributes:
+      label: Are you a maintainer of this tool?
+      options:
+        - "No"
+        - "Yes"
+    validations:
+      required: false

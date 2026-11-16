@@ -1,0 +1,146 @@
+name: velero
+title: Velero
+category: backup-storage
+repo: https://github.com/velero-io/velero
+upstream_license: Apache-2.0
+notes: >-
+  The README table gives an expected range and a separate list of tested
+  Kubernetes versions for the five most recent Velero versions. Rows upstream
+  has since removed were recovered from the README's git history: each is
+  read from the last commit that still listed it, and its delisted date is
+  the date of the commit that removed it. Two early rows that covered spans
+  of 1.6 and 1.7 patch releases are not recorded, because one of them is
+  ambiguous as written.
+releases:
+  - version: "1.19"
+    tested: ["1.36.5", "1.37.1"]
+    stated:
+      min: "1.18"
+      max: latest
+      wording: Expected Kubernetes version compatibility
+    source: https://github.com/velero-io/velero#velero-compatibility-matrix
+    source_commit: 7a5eb79bd4509ce69dee85a696ffde4bbbb6757c
+    verified: 2026-11-16
+  - version: "1.18"
+    tested: ["1.33.7", "1.34.1", "1.35.0"]
+    stated:
+      min: "1.18"
+      max: latest
+      wording: Expected Kubernetes version compatibility
+    source: https://github.com/velero-io/velero#velero-compatibility-matrix
+    source_commit: 7a5eb79bd4509ce69dee85a696ffde4bbbb6757c
+    verified: 2026-11-16
+  - version: "1.17"
+    tested: ["1.31.7", "1.32.3", "1.33.1", "1.34.0"]
+    stated:
+      min: "1.18"
+      max: latest
+      wording: Expected Kubernetes version compatibility
+    source: https://github.com/velero-io/velero#velero-compatibility-matrix
+    source_commit: 7a5eb79bd4509ce69dee85a696ffde4bbbb6757c
+    verified: 2026-11-16
+  - version: "1.16"
+    tested: ["1.31.4", "1.32.3", "1.33.0"]
+    stated:
+      min: "1.18"
+      max: latest
+      wording: Expected Kubernetes version compatibility
+    source: https://github.com/velero-io/velero#velero-compatibility-matrix
+    source_commit: 7a5eb79bd4509ce69dee85a696ffde4bbbb6757c
+    verified: 2026-11-16
+  - version: "1.15"
+    tested: ["1.28.8", "1.29.8", "1.30.4", "1.31.1"]
+    stated:
+      min: "1.18"
+      max: latest
+      wording: Expected Kubernetes version compatibility
+    source: https://github.com/velero-io/velero#velero-compatibility-matrix
+    source_commit: 7a5eb79bd4509ce69dee85a696ffde4bbbb6757c
+    verified: 2026-11-16
+  - version: "1.14"
+    tested: ["1.27.9", "1.28.9", "1.29.4"]
+    stated:
+      min: "1.18"
+      max: latest
+      wording: Expected Kubernetes version compatibility
+    source: https://github.com/velero-io/velero/blob/519cdcdac885d196c7bf94917de4c88e814338f2/README.md#velero-compatibility-matrix
+    source_commit: 519cdcdac885d196c7bf94917de4c88e814338f2
+    verified: 2026-11-16
+    delisted: 2026-11-04
+  - version: "1.13"
+    tested: ["1.26.5", "1.27.3", "1.27.8", "1.28.3"]
+    stated:
+      min: "1.18"
+      max: latest
+      wording: Expected Kubernetes version compatibility
+    source: https://github.com/velero-io/velero/blob/4c30499340c38dce005181aa47fe33d6541a8b79/README.md#velero-compatibility-matrix
+    source_commit: 4c30499340c38dce005181aa47fe33d6541a8b79
+    verified: 2026-11-16
+    delisted: 2026-02-05
+  - version: "1.12"
+    tested: ["1.25.7", "1.26.5", "1.26.7", "1.27.3"]
+    stated:
+      min: "1.18"
+      max: latest
+      wording: Expected Kubernetes version compatibility
+    source: https://github.com/velero-io/velero/blob/4c30499340c38dce005181aa47fe33d6541a8b79/README.md#velero-compatibility-matrix
+    source_commit: 4c30499340c38dce005181aa47fe33d6541a8b79
+    verified: 2026-11-16
+    delisted: 2026-02-05
+  - version: "1.11"
+    tested: ["1.23.10", "1.24.9", "1.25.5", "1.26.1"]
+    stated:
+      min: "1.18"
+      max: latest
+      wording: Expected Kubernetes version compatibility
+    source: https://github.com/velero-io/velero/blob/4c30499340c38dce005181aa47fe33d6541a8b79/README.md#velero-compatibility-matrix
+    source_commit: 4c30499340c38dce005181aa47fe33d6541a8b79
+    verified: 2026-11-16
+    delisted: 2026-02-05
+  - version: "1.10"
+    tested: ["1.22.5", "1.23.8", "1.24.6", "1.25.1"]
+    stated:
+      min: "1.18"
+      max: latest
+      wording: Expected Kubernetes version compatibility
+    source: https://github.com/velero-io/velero/blob/349c8f26c62bec5973bbf03aca826dc8833268ef/README.md#velero-compatibility-matrix
+    source_commit: 349c8f26c62bec5973bbf03aca826dc8833268ef
+    verified: 2026-11-16
+    delisted: 2024-10-10
+  - version: "1.9"
+    tested: ["1.20.5", "1.21.2", "1.22.5", "1.23", "1.24"]
+    stated:
+      min: "1.18"
+      max: latest
+      wording: Expected Kubernetes version compatibility
+    source: https://github.com/velero-io/velero/blob/b57cdb8f96ecd4cbf3fd105c5eee3cfd1d2e0f57/README.md#velero-compatibility-matrix
+    source_commit: b57cdb8f96ecd4cbf3fd105c5eee3cfd1d2e0f57
+    verified: 2026-11-16
+    delisted: 2024-05-23
+  - version: "1.8"
+    stated:
+      min: "1.18"
+      max: latest
+      wording: Expected Kubernetes version compatibility
+    source: https://github.com/velero-io/velero/blob/b57cdb8f96ecd4cbf3fd105c5eee3cfd1d2e0f57/README.md#velero-compatibility-matrix
+    source_commit: b57cdb8f96ecd4cbf3fd105c5eee3cfd1d2e0f57
+    verified: 2026-11-16
+    delisted: 2024-05-23
+  - version: "1.5"
+    stated:
+      min: "1.12"
+      max: "1.21"
+      wording: Expected Kubernetes version compatibility
+    source: https://github.com/velero-io/velero/blob/2c21cec7e456c2b2ae76e51ba8c85c60cde74193/README.md#velero-compatibility-matrix
+    source_commit: 2c21cec7e456c2b2ae76e51ba8c85c60cde74193
+    verified: 2026-11-16
+    delisted: 2023-03-22
+  - version: "1.4"
+    stated:
+      min: "1.10"
+      max: "1.21"
+      wording: Expected Kubernetes version compatibility
+    source: https://github.com/velero-io/velero/blob/2c21cec7e456c2b2ae76e51ba8c85c60cde74193/README.md#velero-compatibility-matrix
+    source_commit: 2c21cec7e456c2b2ae76e51ba8c85c60cde74193
+    verified: 2026-11-16
+    delisted: 2023-03-22

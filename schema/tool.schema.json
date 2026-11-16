@@ -1,0 +1,163 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://docs.k8s-m8s.io/schema/tool.schema.json",
+  "title": "k8s-m8s tool compatibility file",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "title", "category", "repo", "releases"],
+  "properties": {
+    "name": {
+      "description": "Lowercase identifier; must match the file name.",
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "title": {
+      "description": "Display name.",
+      "type": "string",
+      "minLength": 1
+    },
+    "category": {
+      "enum": [
+        "backup-storage",
+        "networking",
+        "gitops-delivery",
+        "security",
+        "observability-policy-scaling"
+      ]
+    },
+    "repo": {
+      "description": "Upstream source repository.",
+      "type": "string",
+      "pattern": "^https://"
+    },
+    "official_sources": {
+      "description": "URL prefixes of the tool's own official documentation sites, in addition to repo. Every release source must sit under repo or one of these.",
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^https://[^/]+" }
+    },
+    "upstream_license": {
+      "description": "SPDX identifier of the upstream repository's license.",
+      "type": "string"
+    },
+    "notes": {
+      "description": "Short factual note about how upstream publishes compatibility.",
+      "type": "string"
+    },
+    "releases": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/release" }
+    }
+  },
+  "$defs": {
+    "minor": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+$"
+    },
+    "patch": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "date": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "tool_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+(\\.[0-9]+)?$"
+    },
+    "kubernetes_range": {
+      "description": "A range of Kubernetes minors. Omit min when upstream gives no lower bound; max is 'latest' when upstream leaves the range open.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max"],
+      "properties": {
+        "min": { "$ref": "#/$defs/minor" },
+        "max": {
+          "type": "string",
+          "pattern": "^([0-9]+\\.[0-9]+|latest)$"
+        }
+      }
+    },
+    "release": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "verified"],
+      "oneOf": [
+        { "required": ["version"] },
+        { "required": ["version_range"] }
+      ],
+      "properties": {
+        "version": {
+          "description": "Tool release line, as upstream names it.",
+          "$ref": "#/$defs/tool_version"
+        },
+        "version_range": {
+          "description": "Band of tool versions, only when upstream states its claim for a band (for example '>= 0.18') and not per version. Omit max when the band is open-ended, min when it has no lower bound.",
+          "type": "object",
+          "additionalProperties": false,
+          "minProperties": 1,
+          "properties": {
+            "min": { "$ref": "#/$defs/tool_version" },
+            "max": { "$ref": "#/$defs/tool_version" }
+          }
+        },
+        "tested": {
+          "description": "Kubernetes versions upstream states it tested, at the precision upstream gives: a patch version, or a minor when upstream names no patch.",
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "anyOf": [{ "$ref": "#/$defs/patch" }, { "$ref": "#/$defs/minor" }]
+          }
+        },
+        "stated": {
+          "description": "Range upstream states is supported or expected, without a testing claim.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["max", "wording"],
+          "properties": {
+            "min": {
+              "description": "Omit when upstream gives no lower bound.",
+              "$ref": "#/$defs/minor"
+            },
+            "max": {
+              "description": "A Kubernetes minor, or 'latest' when upstream leaves the range open.",
+              "type": "string",
+              "pattern": "^([0-9]+\\.[0-9]+|latest)$"
+            },
+            "wording": {
+              "description": "The short phrase upstream uses for this claim.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            }
+          }
+        },
+        "unsupported": {
+          "description": "Kubernetes minors, or ranges of minors, upstream explicitly states are not supported.",
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "anyOf": [{ "$ref": "#/$defs/minor" }, { "$ref": "#/$defs/kubernetes_range" }]
+          }
+        },
+        "source": {
+          "description": "URL of the upstream statement.",
+          "type": "string",
+          "pattern": "^https://"
+        },
+        "source_commit": {
+          "description": "Upstream commit that last changed the source file, as of the verified date; for release notes, the commit the release tag points to.",
+          "type": "string",
+          "pattern": "^[0-9a-f]{7,40}$"
+        },
+        "verified": { "$ref": "#/$defs/date" },
+        "delisted": {
+          "description": "Date this row was removed from the upstream source, or was found removed when the removal date is not known.",
+          "$ref": "#/$defs/date"
+        }
+      }
+    }
+  }
+}

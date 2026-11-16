@@ -1,0 +1,59 @@
+name: Data correction
+description: A recorded claim is wrong, out of date or missing for a tool that is already listed.
+title: "[data] <tool>: "
+labels: ["data"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping keep the data accurate.
+
+        k8s-m8s records only what a tool's own maintainers have stated, so a correction needs a link to where they said it. Personal test results, blog posts and other compatibility lists cannot be used, however likely they are to be right. See [CONTRIBUTING.md](https://github.com/k8s-m8s/k8s-m8s/blob/main/CONTRIBUTING.md).
+  - type: input
+    id: tool
+    attributes:
+      label: Tool
+      description: The tool as named on the site.
+      placeholder: Velero
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Tool version and Kubernetes version
+      description: Which combination is wrong or missing.
+      placeholder: Velero 1.19 on Kubernetes 1.37
+    validations:
+      required: true
+  - type: textarea
+    id: correction
+    attributes:
+      label: What should it say?
+      description: What the site shows now, and what the upstream statement says.
+      placeholder: The site shows "stated". Upstream now lists 1.37.2 as tested.
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Link to the upstream statement
+      description: A URL in the tool's own repository, documentation or release notes. A link to a specific commit or release is best.
+      placeholder: https://github.com/velero-io/velero#velero-compatibility-matrix
+    validations:
+      required: true
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Source check
+      options:
+        - label: The link above is an official source published by the tool's own maintainers.
+          required: true
+  - type: dropdown
+    id: maintainer
+    attributes:
+      label: Are you a maintainer of this tool?
+      options:
+        - "No"
+        - "Yes"
+    validations:
+      required: false

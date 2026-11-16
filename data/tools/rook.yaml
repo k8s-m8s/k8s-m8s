@@ -1,0 +1,66 @@
+name: rook
+title: Rook
+category: backup-storage
+repo: https://github.com/rook/rook
+upstream_license: Apache-2.0
+notes: >-
+  The prerequisites page on each release branch gives one supported
+  Kubernetes range for that Rook version. It does not say which versions
+  were tested. Each entry here is read from its own release branch.
+releases:
+  - version: "1.21"
+    stated:
+      min: "1.32"
+      max: "1.37"
+      wording: are supported
+    source: https://github.com/rook/rook/blob/release-1.21/Documentation/Getting-Started/Prerequisites/prerequisites.md
+    source_commit: f74777db50d272c7f338d31167a6c2ee5346f6ed
+    verified: 2026-11-16
+  - version: "1.20"
+    stated:
+      min: "1.31"
+      max: "1.37"
+      wording: are supported
+    source: https://github.com/rook/rook/blob/release-1.20/Documentation/Getting-Started/Prerequisites/prerequisites.md
+    source_commit: 16e9ddcd55b28f5cfbecdd2c187b96c345ec7506
+    verified: 2026-11-16
+  - version: "1.19"
+    stated:
+      min: "1.30"
+      max: "1.35"
+      wording: are supported
+    source: https://github.com/rook/rook/blob/release-1.19/Documentation/Getting-Started/Prerequisites/prerequisites.md
+    source_commit: ecb79b5faec93081c2417d9c6634bfd29e1a4eea
+    verified: 2026-11-16
+  - version: "1.18"
+    stated:
+      min: "1.29"
+      max: "1.34"
+      wording: are supported
+    source: https://github.com/rook/rook/blob/release-1.18/Documentation/Getting-Started/Prerequisites/prerequisites.md
+    source_commit: 4941d02bdcc52917a719e9651b2cc6190d7c3d26
+    verified: 2026-11-16
+  - version: "1.17"
+    stated:
+      min: "1.28"
+      max: "1.33"
+      wording: are supported
+    source: https://github.com/rook/rook/blob/release-1.17/Documentation/Getting-Started/Prerequisites/prerequisites.md
+    source_commit: b74888ec9efcf0302ff0e27a4354edb0801b9995
+    verified: 2026-11-16
+  - version: "1.16"
+    stated:
+      min: "1.27"
+      max: "1.32"
+      wording: are supported
+    source: https://github.com/rook/rook/blob/release-1.16/Documentation/Getting-Started/Prerequisites/prerequisites.md
+    source_commit: 26689e9a5b151a08bc06896ec1f640de9fa0378d
+    verified: 2026-11-16
+  - version: "1.15"
+    stated:
+      min: "1.26"
+      max: "1.31"
+      wording: are supported
+    source: https://github.com/rook/rook/blob/release-1.15/Documentation/Getting-Started/Prerequisites/prerequisites.md
+    source_commit: 955876cc4464d97ea05a02820feb8a9cb22bce8a
+    verified: 2026-11-16

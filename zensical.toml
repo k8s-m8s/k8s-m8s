@@ -1,0 +1,78 @@
+# Site configuration for Zensical (https://zensical.org).
+# Preview locally:  pip install -r requirements-site.txt && zensical serve
+# Run scripts/generate.py first: docs/matrix.md and docs/tools/ are build output.
+
+[project]
+site_name = "k8s-m8s"
+site_description = "Which versions of popular Kubernetes tools work with which Kubernetes versions, with the receipts."
+docs_dir = "docs"
+site_url = "https://docs.k8s-m8s.io/"
+repo_url = "https://github.com/k8s-m8s/k8s-m8s"
+repo_name = "k8s-m8s/k8s-m8s"
+site_dir = "site"
+copyright = "Data and documentation: <a href=\"https://creativecommons.org/licenses/by/4.0/\">CC BY 4.0</a>. Independent project, not affiliated with or endorsed by the Kubernetes project, the CNCF, the Linux Foundation or any listed tool. The data is provided as is. Always check the linked upstream source and test before upgrading a cluster or a tool."
+# The navigation is rewritten by scripts/generate.py; do not edit it by hand.
+# BEGIN generated nav
+nav = [
+  { "Home" = "index.md" },
+  { "Compatibility matrix" = "matrix.md" },
+  { "How to read this" = "how-to-read.md" },
+  { "Tools" = [
+    { "Argo CD" = "tools/argo-cd.md" },
+    { "Calico" = "tools/calico.md" },
+    { "cert-manager" = "tools/cert-manager.md" },
+    { "Cilium" = "tools/cilium.md" },
+    { "Cluster Autoscaler" = "tools/cluster-autoscaler.md" },
+    { "Contour" = "tools/contour.md" },
+    { "Envoy Gateway" = "tools/envoy-gateway.md" },
+    { "External Secrets Operator" = "tools/external-secrets.md" },
+    { "ExternalDNS" = "tools/external-dns.md" },
+    { "Flux" = "tools/flux.md" },
+    { "Istio" = "tools/istio.md" },
+    { "Karpenter" = "tools/karpenter.md" },
+    { "KEDA" = "tools/keda.md" },
+    { "Kyverno" = "tools/kyverno.md" },
+    { "Longhorn" = "tools/longhorn.md" },
+    { "Metrics Server" = "tools/metrics-server.md" },
+    { "Rook" = "tools/rook.md" },
+    { "Velero" = "tools/velero.md" },
+  ] },
+]
+# END generated nav
+extra_css = [
+  "stylesheets/extra.css",
+]
+
+[project.theme]
+features = [
+  "navigation.sections",
+  "navigation.top",
+  "toc.follow",
+]
+
+[project.theme.icon]
+logo = "lucide/table-properties"
+
+# Colour mode: follows the system setting until the reader picks light or dark.
+[[project.theme.palette]]
+media = "(prefers-color-scheme)"
+primary = "indigo"
+accent = "indigo"
+toggle.icon = "lucide/sun-moon"
+toggle.name = "Switch to light mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: light)"
+scheme = "default"
+primary = "indigo"
+accent = "indigo"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: dark)"
+scheme = "slate"
+primary = "indigo"
+accent = "indigo"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to system preference"

@@ -1,0 +1,8 @@
+# The Kubernetes minor versions shown in the main matrix: the latest three.
+# Update when a new minor is released, then re-verify every tool.
+# Read from data/releases/schedule.yaml in https://github.com/kubernetes/website
+# (the data behind the source page) at source_commit.
+window: ["1.37", "1.36", "1.35"]
+source: https://kubernetes.io/releases/
+source_commit: 654d44546ac8d0dc288f14e14e467205e3f87ab1
+verified: 2026-11-16

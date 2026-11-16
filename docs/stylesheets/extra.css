@@ -1,0 +1,82 @@
+/* Claim-level badges used in the compatibility tables.
+   Every badge carries its level as text; colour is only reinforcement. */
+
+:root {
+  --k8s-tested-fg: #14532d;
+  --k8s-tested-bg: #dcfce7;
+  --k8s-stated-fg: #1e3a8a;
+  --k8s-stated-bg: #dbeafe;
+  --k8s-unsupported-fg: #7f1d1d;
+  --k8s-unsupported-bg: #fee2e2;
+  --k8s-unknown-fg: #52525b;
+  --k8s-unknown-bg: transparent;
+  --k8s-unknown-border: #d4d4d8;
+}
+
+[data-md-color-scheme="slate"] {
+  --k8s-tested-fg: #bbf7d0;
+  --k8s-tested-bg: #14532d;
+  --k8s-stated-fg: #bfdbfe;
+  --k8s-stated-bg: #1e3a8a;
+  --k8s-unsupported-fg: #fecaca;
+  --k8s-unsupported-bg: #7f1d1d;
+  --k8s-unknown-fg: #a1a1aa;
+  --k8s-unknown-bg: transparent;
+  --k8s-unknown-border: #52525b;
+}
+
+.k8s-level {
+  display: inline-block;
+  padding: 0.05em 0.6em;
+  border: 1px solid transparent;
+  border-radius: 1em;
+  font-size: 0.85em;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.k8s-tested { color: var(--k8s-tested-fg); background: var(--k8s-tested-bg); }
+.k8s-stated { color: var(--k8s-stated-fg); background: var(--k8s-stated-bg); }
+.k8s-unsupported { color: var(--k8s-unsupported-fg); background: var(--k8s-unsupported-bg); }
+.k8s-unknown {
+  color: var(--k8s-unknown-fg);
+  background: var(--k8s-unknown-bg);
+  border-color: var(--k8s-unknown-border);
+  font-weight: 400;
+}
+
+.k8s-detail {
+  margin-left: 0.3em;
+  font-size: 0.85em;
+  white-space: nowrap;
+}
+
+/* Keep the version column on one line. */
+.md-typeset table:not([class]) td:first-child {
+  white-space: nowrap;
+}
+
+/* Upstream's own wording, shown under the stated range on tool pages. */
+.k8s-wording {
+  font-size: 0.85em;
+  color: var(--md-default-fg-color--light);
+}
+
+/* Dates stay on one line. */
+.k8s-date {
+  white-space: nowrap;
+}
+
+/* Tighter table cells on narrow screens, so three Kubernetes columns fit. */
+@media screen and (max-width: 44.9375em) {
+  .md-typeset table:not([class]) th,
+  .md-typeset table:not([class]) td {
+    padding: 0.6em 0.5em;
+    min-width: 0;
+  }
+  .k8s-detail {
+    display: block;
+    margin-left: 0;
+  }
+}

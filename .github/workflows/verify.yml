@@ -1,0 +1,104 @@
+name: Verify against upstream
+
+# Every week: re-read every upstream statement, write any differences into the
+# data files, and open a pull request for a human to review. Nothing reaches
+# main without that review.
+
+on:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write        # push the proposal branch
+  pull-requests: write   # open or update the pull request
+  actions: write         # start the validate workflow on the proposal branch
+
+concurrency:
+  group: verify
+  cancel-in-progress: false
+
+env:
+  BRANCH: automated/verify
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+      - run: pip install -r requirements.txt
+
+      - name: Compare with upstream and apply differences
+        id: verify
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set +e
+          python scripts/verify.py --apply > "$RUNNER_TEMP/report.txt" 2>&1
+          echo "status=$?" >> "$GITHUB_OUTPUT"
+          cat "$RUNNER_TEMP/report.txt"
+
+      - name: Check the result
+        id: check
+        run: |
+          set +e
+          { python scripts/validate.py --strict && python -m unittest discover tests; } > "$RUNNER_TEMP/check.txt" 2>&1
+          echo "status=$?" >> "$GITHUB_OUTPUT"
+          cat "$RUNNER_TEMP/check.txt"
+
+      - name: Open or update the pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet -- data; then
+            echo "Data files are unchanged; no pull request needed."
+            exit 0
+          fi
+          if grep -q '^  - ' "$RUNNER_TEMP/report.txt"; then
+            title="Weekly verification: upstream changes to review"
+          else
+            title="Weekly verification: dates refreshed, no upstream changes"
+          fi
+          {
+            echo "Opened by the weekly verification workflow. It re-read every upstream statement and wrote the result into \`data/\`."
+            echo
+            echo "**Before merging:** for each line marked \`applied\` below, open the tool's source link and confirm the change matches what upstream states. Lines marked \`needs a human\` were not changed and need a manual fix. Lines without either are date refreshes only."
+            echo
+            echo "## Verification report"
+            echo
+            echo '```'
+            cat "$RUNNER_TEMP/report.txt"
+            echo '```'
+            echo
+            echo "## Validation and tests"
+            echo
+            echo '```'
+            cat "$RUNNER_TEMP/check.txt"
+            echo '```'
+          } > "$RUNNER_TEMP/body.md"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$BRANCH"
+          git add data
+          git commit -m "Weekly verification against upstream"
+          git push --force origin "$BRANCH"
+
+          if [ "$(gh pr list --head "$BRANCH" --state open --json number --jq length)" = "0" ]; then
+            gh pr create --base "${{ github.event.repository.default_branch }}" --head "$BRANCH" --title "$title" --body-file "$RUNNER_TEMP/body.md"
+          else
+            gh pr edit "$BRANCH" --title "$title" --body-file "$RUNNER_TEMP/body.md"
+          fi
+
+          # A pull request opened with the workflow token does not start other
+          # workflows, so start the checks for it explicitly.
+          gh workflow run validate.yml --ref "$BRANCH"
+
+      - name: Fail if anything needs a human
+        if: steps.verify.outputs.status != '0' || steps.check.outputs.status != '0'
+        run: |
+          echo "The verification or the checks reported problems; see the steps above."
+          exit 1

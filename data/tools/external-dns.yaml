@@ -1,0 +1,46 @@
+name: external-dns
+title: ExternalDNS
+category: networking
+repo: https://github.com/kubernetes-sigs/external-dns
+upstream_license: Apache-2.0
+notes: >-
+  The README table states compatibility for three bands of ExternalDNS
+  versions, not per version, marking each Kubernetes range as compatible or
+  not. It does not say which versions were tested.
+releases:
+  - version_range:
+      min: "0.18"
+    stated:
+      min: "1.21"
+      max: latest
+      wording: Kubernetes version compatibility
+    unsupported:
+      - max: "1.20"
+    source: https://github.com/kubernetes-sigs/external-dns#kubernetes-version-compatibility
+    source_commit: a1527c0913b5ebcfaa6b96bac47e0fddf93a9325
+    verified: 2026-11-16
+  - version_range:
+      min: "0.10"
+      max: "0.17"
+    stated:
+      min: "1.19"
+      max: "1.32"
+      wording: Kubernetes version compatibility
+    unsupported:
+      - max: "1.18"
+      - min: "1.33"
+        max: latest
+    source: https://github.com/kubernetes-sigs/external-dns#kubernetes-version-compatibility
+    source_commit: a1527c0913b5ebcfaa6b96bac47e0fddf93a9325
+    verified: 2026-11-16
+  - version_range:
+      max: "0.9"
+    stated:
+      max: "1.21"
+      wording: Kubernetes version compatibility
+    unsupported:
+      - min: "1.22"
+        max: latest
+    source: https://github.com/kubernetes-sigs/external-dns#kubernetes-version-compatibility
+    source_commit: a1527c0913b5ebcfaa6b96bac47e0fddf93a9325
+    verified: 2026-11-16

@@ -1,0 +1,242 @@
+name: cert-manager
+title: cert-manager
+category: security
+repo: https://github.com/cert-manager/cert-manager
+# The statement lives in the project's website repository (the source of
+# cert-manager.io, which the main repo's README links to).
+official_sources:
+  - https://github.com/cert-manager/website
+upstream_license: Apache-2.0
+notes: >-
+  The supported releases page gives, for each currently supported
+  cert-manager release, a supported Kubernetes range and a separate tested
+  range, both as minors without patch versions. Older releases have a single
+  compatible range and no testing claim. The recorded commit is from the website
+  repository.
+releases:
+  - version: "1.21"
+    tested: ["1.33", "1.34", "1.35", "1.36"]
+    stated:
+      min: "1.33"
+      max: "1.36"
+      wording: Supported Kubernetes / OpenShift Versions
+    source: https://github.com/cert-manager/website/blob/master/content/docs/releases/README.md
+    source_commit: 7cd9bae272c587e9b738ff900e28e87f37022b3b
+    verified: 2026-11-16
+  - version: "1.20"
+    tested: ["1.32", "1.33", "1.34", "1.35"]
+    stated:
+      min: "1.32"
+      max: "1.35"
+      wording: Supported Kubernetes / OpenShift Versions
+    source: https://github.com/cert-manager/website/blob/master/content/docs/releases/README.md
+    source_commit: 7cd9bae272c587e9b738ff900e28e87f37022b3b
+    verified: 2026-11-16
+  - version: "1.19"
+    stated:
+      min: "1.31"
+      max: "1.35"
+      wording: Compatible Kubernetes versions
+    source: https://github.com/cert-manager/website/blob/master/content/docs/releases/README.md
+    source_commit: 7cd9bae272c587e9b738ff900e28e87f37022b3b
+    verified: 2026-11-16
+  - version: "1.18"
+    stated:
+      min: "1.29"
+      max: "1.33"
+      wording: Compatible Kubernetes versions
+    source: https://github.com/cert-manager/website/blob/master/content/docs/releases/README.md
+    source_commit: 7cd9bae272c587e9b738ff900e28e87f37022b3b
+    verified: 2026-11-16
+  - version: "1.17"
+    stated:
+      min: "1.29"
+      max: "1.33"
+      wording: Compatible Kubernetes versions
+    source: https://github.com/cert-manager/website/blob/master/content/docs/releases/README.md
+    source_commit: 7cd9bae272c587e9b738ff900e28e87f37022b3b
+    verified: 2026-11-16
+  - version: "1.16"
+    stated:
+      min: "1.25"
+      max: "1.32"
+      wording: Compatible Kubernetes versions
+    source: https://github.com/cert-manager/website/blob/master/content/docs/releases/README.md
+    source_commit: 7cd9bae272c587e9b738ff900e28e87f37022b3b
+    verified: 2026-11-16
+  - version: "1.15"
+    stated:
+      min: "1.25"
+      max: "1.32"
+      wording: Compatible Kubernetes versions
+    source: https://github.com/cert-manager/website/blob/master/content/docs/releases/README.md
+    source_commit: 7cd9bae272c587e9b738ff900e28e87f37022b3b
+    verified: 2026-11-16
+  - version: "1.14"
+    stated:
+      min: "1.24"
+      max: "1.31"
+      wording: Compatible Kubernetes versions
+    source: https://github.com/cert-manager/website/blob/master/content/docs/releases/README.md
+    source_commit: 7cd9bae272c587e9b738ff900e28e87f37022b3b
+    verified: 2026-11-16
+  - version: "1.13"
+    stated:
+      min: "1.21"
+      max: "1.27"
+      wording: Compatible Kubernetes versions
+    source: https://github.com/cert-manager/website/blob/master/content/docs/releases/README.md
+    source_commit: 7cd9bae272c587e9b738ff900e28e87f37022b3b
+    verified: 2026-11-16
+  - version: "1.12"
+    stated:
+      min: "1.22"
+      max: "1.32"
+      wording: Compatible Kubernetes versions
+    source: https://github.com/cert-manager/website/blob/master/content/docs/releases/README.md
+    source_commit: 7cd9bae272c587e9b738ff900e28e87f37022b3b
+    verified: 2026-11-16
+  - version: "1.11"
+    stated:
+      min: "1.21"
+      max: "1.27"
+      wording: Compatible Kubernetes versions
+    source: https://github.com/cert-manager/website/blob/master/content/docs/releases/README.md
+    source_commit: 7cd9bae272c587e9b738ff900e28e87f37022b3b
+    verified: 2026-11-16
+  - version: "1.10"
+    stated:
+      min: "1.20"
+      max: "1.26"
+      wording: Compatible Kubernetes versions
+    source: https://github.com/cert-manager/website/blob/master/content/docs/releases/README.md
+    source_commit: 7cd9bae272c587e9b738ff900e28e87f37022b3b
+    verified: 2026-11-16
+  - version: "1.9"
+    stated:
+      min: "1.20"
+      max: "1.24"
+      wording: Compatible Kubernetes versions
+    source: https://github.com/cert-manager/website/blob/master/content/docs/releases/README.md
+    source_commit: 7cd9bae272c587e9b738ff900e28e87f37022b3b
+    verified: 2026-11-16
+  - version: "1.8"
+    stated:
+      min: "1.19"
+      max: "1.24"
+      wording: Compatible Kubernetes versions
+    source: https://github.com/cert-manager/website/blob/master/content/docs/releases/README.md
+    source_commit: 7cd9bae272c587e9b738ff900e28e87f37022b3b
+    verified: 2026-11-16
+  - version: "1.7"
+    stated:
+      min: "1.18"
+      max: "1.23"
+      wording: Compatible Kubernetes versions
+    source: https://github.com/cert-manager/website/blob/master/content/docs/releases/README.md
+    source_commit: 7cd9bae272c587e9b738ff900e28e87f37022b3b
+    verified: 2026-11-16
+  - version: "1.6"
+    stated:
+      min: "1.17"
+      max: "1.22"
+      wording: Compatible Kubernetes versions
+    source: https://github.com/cert-manager/website/blob/master/content/docs/releases/README.md
+    source_commit: 7cd9bae272c587e9b738ff900e28e87f37022b3b
+    verified: 2026-11-16
+  - version: "1.5"
+    stated:
+      min: "1.16"
+      max: "1.22"
+      wording: Compatible Kubernetes versions
+    source: https://github.com/cert-manager/website/blob/master/content/docs/releases/README.md
+    source_commit: 7cd9bae272c587e9b738ff900e28e87f37022b3b
+    verified: 2026-11-16
+  - version: "1.4"
+    stated:
+      min: "1.16"
+      max: "1.21"
+      wording: Compatible Kubernetes versions
+    source: https://github.com/cert-manager/website/blob/master/content/docs/releases/README.md
+    source_commit: 7cd9bae272c587e9b738ff900e28e87f37022b3b
+    verified: 2026-11-16
+  - version: "1.3"
+    stated:
+      min: "1.16"
+      max: "1.21"
+      wording: Compatible Kubernetes versions
+    source: https://github.com/cert-manager/website/blob/master/content/docs/releases/README.md
+    source_commit: 7cd9bae272c587e9b738ff900e28e87f37022b3b
+    verified: 2026-11-16
+  - version: "1.2"
+    stated:
+      min: "1.16"
+      max: "1.21"
+      wording: Compatible Kubernetes versions
+    source: https://github.com/cert-manager/website/blob/master/content/docs/releases/README.md
+    source_commit: 7cd9bae272c587e9b738ff900e28e87f37022b3b
+    verified: 2026-11-16
+  - version: "1.1"
+    stated:
+      min: "1.11"
+      max: "1.21"
+      wording: Compatible Kubernetes versions
+    source: https://github.com/cert-manager/website/blob/master/content/docs/releases/README.md
+    source_commit: 7cd9bae272c587e9b738ff900e28e87f37022b3b
+    verified: 2026-11-16
+  - version: "1.0"
+    stated:
+      min: "1.11"
+      max: "1.21"
+      wording: Compatible Kubernetes versions
+    source: https://github.com/cert-manager/website/blob/master/content/docs/releases/README.md
+    source_commit: 7cd9bae272c587e9b738ff900e28e87f37022b3b
+    verified: 2026-11-16
+  - version: "0.16"
+    stated:
+      min: "1.11"
+      max: "1.21"
+      wording: Compatible Kubernetes versions
+    source: https://github.com/cert-manager/website/blob/master/content/docs/releases/README.md
+    source_commit: 7cd9bae272c587e9b738ff900e28e87f37022b3b
+    verified: 2026-11-16
+  - version: "0.15"
+    stated:
+      min: "1.11"
+      max: "1.21"
+      wording: Compatible Kubernetes versions
+    source: https://github.com/cert-manager/website/blob/master/content/docs/releases/README.md
+    source_commit: 7cd9bae272c587e9b738ff900e28e87f37022b3b
+    verified: 2026-11-16
+  - version: "0.14"
+    stated:
+      min: "1.11"
+      max: "1.21"
+      wording: Compatible Kubernetes versions
+    source: https://github.com/cert-manager/website/blob/master/content/docs/releases/README.md
+    source_commit: 7cd9bae272c587e9b738ff900e28e87f37022b3b
+    verified: 2026-11-16
+  - version: "0.13"
+    stated:
+      min: "1.11"
+      max: "1.21"
+      wording: Compatible Kubernetes versions
+    source: https://github.com/cert-manager/website/blob/master/content/docs/releases/README.md
+    source_commit: 7cd9bae272c587e9b738ff900e28e87f37022b3b
+    verified: 2026-11-16
+  - version: "0.12"
+    stated:
+      min: "1.11"
+      max: "1.21"
+      wording: Compatible Kubernetes versions
+    source: https://github.com/cert-manager/website/blob/master/content/docs/releases/README.md
+    source_commit: 7cd9bae272c587e9b738ff900e28e87f37022b3b
+    verified: 2026-11-16
+  - version: "0.11"
+    stated:
+      min: "1.9"
+      max: "1.21"
+      wording: Compatible Kubernetes versions
+    source: https://github.com/cert-manager/website/blob/master/content/docs/releases/README.md
+    source_commit: 7cd9bae272c587e9b738ff900e28e87f37022b3b
+    verified: 2026-11-16

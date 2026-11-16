@@ -1,0 +1,2 @@
+# Only needed to build or preview the site. Requires Python 3.11 or newer.
+zensical>=0.1.1,<0.2

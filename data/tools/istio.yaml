@@ -1,0 +1,176 @@
+name: istio
+title: Istio
+category: networking
+repo: https://github.com/istio/istio
+# The statement lives in the project's website repository (the source of
+# istio.io, which the main repo's README links to).
+official_sources:
+  - https://github.com/istio/istio.io
+upstream_license: Apache-2.0
+notes: >-
+  The supported releases page is built from a data file in the website
+  repository that lists supported Kubernetes minors for each Istio release.
+  Upstream also lists older Kubernetes minors as "Tested, but not supported";
+  those are not recorded here because upstream does not support them.
+  The recorded commit is from the website repository.
+releases:
+  - version: "1.32"
+    stated:
+      min: "1.33"
+      max: "1.37"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/istio/istio.io/blob/master/data/compatibility/supportStatus.yml
+    source_commit: 2348bd42533167ec8cdb078ea260ce4ecb4adab5
+    verified: 2026-11-16
+  - version: "1.31"
+    stated:
+      min: "1.32"
+      max: "1.37"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/istio/istio.io/blob/master/data/compatibility/supportStatus.yml
+    source_commit: 2348bd42533167ec8cdb078ea260ce4ecb4adab5
+    verified: 2026-11-16
+  - version: "1.30"
+    stated:
+      min: "1.32"
+      max: "1.36"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/istio/istio.io/blob/master/data/compatibility/supportStatus.yml
+    source_commit: 2348bd42533167ec8cdb078ea260ce4ecb4adab5
+    verified: 2026-11-16
+  - version: "1.29"
+    stated:
+      min: "1.31"
+      max: "1.35"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/istio/istio.io/blob/master/data/compatibility/supportStatus.yml
+    source_commit: 2348bd42533167ec8cdb078ea260ce4ecb4adab5
+    verified: 2026-11-16
+  - version: "1.28"
+    stated:
+      min: "1.30"
+      max: "1.34"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/istio/istio.io/blob/master/data/compatibility/supportStatus.yml
+    source_commit: 2348bd42533167ec8cdb078ea260ce4ecb4adab5
+    verified: 2026-11-16
+  - version: "1.27"
+    stated:
+      min: "1.29"
+      max: "1.33"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/istio/istio.io/blob/master/data/compatibility/supportStatus.yml
+    source_commit: 2348bd42533167ec8cdb078ea260ce4ecb4adab5
+    verified: 2026-11-16
+  - version: "1.26"
+    stated:
+      min: "1.29"
+      max: "1.33"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/istio/istio.io/blob/master/data/compatibility/supportStatus.yml
+    source_commit: 2348bd42533167ec8cdb078ea260ce4ecb4adab5
+    verified: 2026-11-16
+  - version: "1.25"
+    stated:
+      min: "1.29"
+      max: "1.32"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/istio/istio.io/blob/master/data/compatibility/supportStatus.yml
+    source_commit: 2348bd42533167ec8cdb078ea260ce4ecb4adab5
+    verified: 2026-11-16
+  - version: "1.24"
+    stated:
+      min: "1.28"
+      max: "1.31"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/istio/istio.io/blob/master/data/compatibility/supportStatus.yml
+    source_commit: 2348bd42533167ec8cdb078ea260ce4ecb4adab5
+    verified: 2026-11-16
+  - version: "1.23"
+    stated:
+      min: "1.27"
+      max: "1.30"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/istio/istio.io/blob/master/data/compatibility/supportStatus.yml
+    source_commit: 2348bd42533167ec8cdb078ea260ce4ecb4adab5
+    verified: 2026-11-16
+  - version: "1.22"
+    stated:
+      min: "1.27"
+      max: "1.30"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/istio/istio.io/blob/master/data/compatibility/supportStatus.yml
+    source_commit: 2348bd42533167ec8cdb078ea260ce4ecb4adab5
+    verified: 2026-11-16
+  - version: "1.21"
+    stated:
+      min: "1.26"
+      max: "1.29"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/istio/istio.io/blob/master/data/compatibility/supportStatus.yml
+    source_commit: 2348bd42533167ec8cdb078ea260ce4ecb4adab5
+    verified: 2026-11-16
+  - version: "1.20"
+    stated:
+      min: "1.25"
+      max: "1.29"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/istio/istio.io/blob/master/data/compatibility/supportStatus.yml
+    source_commit: 2348bd42533167ec8cdb078ea260ce4ecb4adab5
+    verified: 2026-11-16
+  - version: "1.19"
+    stated:
+      min: "1.25"
+      max: "1.28"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/istio/istio.io/blob/master/data/compatibility/supportStatus.yml
+    source_commit: 2348bd42533167ec8cdb078ea260ce4ecb4adab5
+    verified: 2026-11-16
+  - version: "1.18"
+    stated:
+      min: "1.24"
+      max: "1.27"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/istio/istio.io/blob/master/data/compatibility/supportStatus.yml
+    source_commit: 2348bd42533167ec8cdb078ea260ce4ecb4adab5
+    verified: 2026-11-16
+  - version: "1.17"
+    stated:
+      min: "1.23"
+      max: "1.26"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/istio/istio.io/blob/master/data/compatibility/supportStatus.yml
+    source_commit: 2348bd42533167ec8cdb078ea260ce4ecb4adab5
+    verified: 2026-11-16
+  - version: "1.16"
+    stated:
+      min: "1.22"
+      max: "1.25"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/istio/istio.io/blob/master/data/compatibility/supportStatus.yml
+    source_commit: 2348bd42533167ec8cdb078ea260ce4ecb4adab5
+    verified: 2026-11-16
+  - version: "1.15"
+    stated:
+      min: "1.22"
+      max: "1.25"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/istio/istio.io/blob/master/data/compatibility/supportStatus.yml
+    source_commit: 2348bd42533167ec8cdb078ea260ce4ecb4adab5
+    verified: 2026-11-16
+  - version: "1.14"
+    stated:
+      min: "1.21"
+      max: "1.24"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/istio/istio.io/blob/master/data/compatibility/supportStatus.yml
+    source_commit: 2348bd42533167ec8cdb078ea260ce4ecb4adab5
+    verified: 2026-11-16
+  - version: "1.13"
+    stated:
+      min: "1.20"
+      max: "1.23"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/istio/istio.io/blob/master/data/compatibility/supportStatus.yml
+    source_commit: 2348bd42533167ec8cdb078ea260ce4ecb4adab5
+    verified: 2026-11-16
