@@ -65,6 +65,41 @@ Labels: `claim-change`, `window-change`, `bookkeeping`, `human-merge`, `needs-hu
 | `AUTOMERGE_ENABLED` | `true` |
 | `AUTOMERGE_DRY_RUN` | `true` (claim pull requests only; see the shadow period) |
 
+## Repository configuration
+
+The automation also depends on these settings, which live in GitHub rather than in the repository's files. `tests/test_workflows.py` can't check them, so rerun the rehearsal (under [Routine operations](#routine-operations)) after changing any of them.
+
+**GitHub Apps.** Both are installed on this repository only, with webhooks off.
+- `k8s-m8s-automation`: Contents, Pull requests and Issues read and write; Actions, Checks and Metadata read. It has no Workflows permission, so it can't change files under `.github/workflows/`.
+- `k8s-m8s-reviewer`: Pull requests read and write, and Metadata read. Nothing else.
+
+**Environments.** `automation` and `review` hold the secrets and variables listed under [Identities and secrets](#identities-and-secrets). Both allow deployments from `main` only, with no required reviewers, so scheduled runs don't wait. GitHub creates an environment the first time a workflow names it, without that branch restriction. So an environment must exist before any workflow that uses it is merged.
+
+**Rulesets.**
+- `default`, on `main`: requires a pull request, with stale approvals dismissed on new pushes; requires the `validate` check on an up-to-date branch; requires linear history; blocks force pushes and deletion. The required approval count is set to fit the maintainer team, because GitHub doesn't let anyone approve their own pull request.
+- `automated`, on `automated/**`: restricts creations, updates and deletions, and blocks force pushes.
+- The automation App is the only bypass actor on both rulesets.
+
+**Code owners.** `.github/CODEOWNERS` names the `@k8s-m8s/maintainers` team. GitHub ignores a code owner team that is secret or lacks write access.
+
+**Claude token.** `CLAUDE_CODE_OAUTH_TOKEN` in the `review` environment is a long-lived Claude Code OAuth token, created with `claude setup-token`. It expires; see [Routine operations](#routine-operations).
+
+### The actions allowlist
+
+The allowlist decides which actions may run at all. The workflow files decide which version runs: every action there is pinned to a full commit SHA, which the repository setting below and `tests/test_workflows.py` both enforce. An upgrade is therefore a reviewed change to a workflow file, not a settings change.
+
+The settings are under **Settings → Actions → General → Actions permissions**. They can also be set at organization level, which caps what each repository may allow:
+
+- **Allow k8s-m8s, and select non-k8s-m8s, actions and reusable workflows**, with **Allow actions created by GitHub** ticked and **Allow actions by Marketplace verified creators** unticked.
+- **Allow specified actions and reusable workflows**:
+  ```
+  anthropics/claude-code-action@*,
+  oven-sh/setup-bun@*,
+  ```
+- **Require actions to be pinned to a full-length commit SHA**: on.
+
+`oven-sh/setup-bun` is on the list because `claude-code-action` runs it internally, and the allowlist applies to nested actions too. A workflow that uses an action missing from the list fails at startup ("This run likely failed because of a workflow file issue") before any job runs. Add a new third-party action to the list only after deciding to trust its publisher, and add it to the allowlists in `tests/test_workflows.py` in the same pull request.
+
 ## Workflow rules
 
 `tests/test_workflows.py` enforces these; it fails if a workflow breaks one.
@@ -137,73 +172,6 @@ For the first 4 weeks `AUTOMERGE_DRY_RUN=true` stays set. Claim pull requests ge
 **Rehearse end to end.** Run `detect.yml` manually with the `fixture` input set to a tool name (for example `velero`). It opens a `[test fixture]` claim pull request that adds a `tested` patch version upstream does not state (`<newest minor>.99`). The review must mark it `mismatch`, and `automerge.yml` must say "Would not merge" and add `human-merge`. Close the pull request afterwards. The next `detect.yml` run deletes its branch, as it does for any automated branch whose pull request was closed by hand.
 
 **Update the actions.** Dependabot proposes action and pip updates monthly, grouped. They never merge automatically. Review updates to `anthropics/claude-code-action`, `actions/create-github-app-token` and Zensical line by line. For `claude-code-action`, check the release notes for changes to permission modes, `allowed_bots`, `structured_output` and `execution_file`. Then re-run the fixture rehearsal.
-
-### The actions allowlist
-
-The allowlist decides which actions may run at all. The workflow files decide which version runs: every action there is pinned to a full commit SHA, which the repository setting below and `tests/test_workflows.py` both enforce. An upgrade is therefore a reviewed change to a workflow file, not a settings change.
-
-The settings are under **Settings → Actions → General → Actions permissions**. They can also be set at organization level, which caps what each repository may allow:
-
-- **Allow k8s-m8s, and select non-k8s-m8s, actions and reusable workflows**, with **Allow actions created by GitHub** ticked and **Allow actions by Marketplace verified creators** unticked.
-- **Allow specified actions and reusable workflows**:
-  ```
-  anthropics/claude-code-action@*,
-  oven-sh/setup-bun@*,
-  ```
-- **Require actions to be pinned to a full-length commit SHA**: on.
-
-`oven-sh/setup-bun` is on the list because `claude-code-action` runs it internally, and the allowlist applies to nested actions too. A workflow that uses an action missing from the list fails at startup ("This run likely failed because of a workflow file issue") before any job runs. Add a new third-party action to the list only after deciding to trust its publisher, and add it to the allowlists in `tests/test_workflows.py` in the same pull request.
-
-## Setup
-
-Do parts A to C before merging the automation workflows. GitHub creates an environment that a workflow refers to on first use, and that environment would have no branch restriction. Part D needs the merged workflows.
-
-### A. Two GitHub Apps
-
-Create both under **org settings → Developer settings → GitHub Apps → New GitHub App**:
-
-| | `k8s-m8s-automation` | `k8s-m8s-reviewer` |
-|---|---|---|
-| Homepage | `https://docs.k8s-m8s.io/` | `https://docs.k8s-m8s.io/` |
-| Webhook | Off | Off |
-| Repository permissions | Contents: Read and write. Pull requests: Read and write. Issues: Read and write. Actions: Read. Checks: Read. Metadata: Read. **Workflows: No access.** | Pull requests: Read and write. Metadata: Read. Nothing else. |
-| Installable by | Only this account | Only this account |
-
-For each App: note its App ID, generate a private key, and install it on `k8s-m8s/k8s-m8s` only. The reviewer App's description can read: "Posts automated verification comments for k8s-m8s. Never merges."
-
-If a name is taken, keep the `k8s-m8s-` prefix and a role word, and change `AUTOMATION_LOGIN` or `REVIEWER_LOGIN` to match.
-
-### B. Environments, variables, rulesets and the team
-
-1. Under **Settings → Environments**, create `automation` and `review` with the secrets and variables in the tables above. Set **Deployment branches and tags** to **Selected branches: `main`**, and leave required reviewers off.
-2. Under **Settings → Secrets and variables → Actions → Variables**, add the four repository variables above.
-3. Under **Settings → Rules → Rulesets**:
-   - **Edit the existing `default` ruleset** (on `main`):
-     - dismiss stale approvals on new pushes. Set the required approvals to what the maintainers can provide: GitHub does not let anyone approve their own pull request;
-     - keep the required `validate` check, the force-push and deletion blocks, and linear history;
-     - add `k8s-m8s-automation` as the only bypass actor.
-   - **Create a ruleset named `automated`** for `refs/heads/automated/**`:
-     - restrict creations, updates and deletions, and block force pushes;
-     - add `k8s-m8s-automation` as the only bypass actor. The App needs to force-push its own branches when it rewrites a claim pull request.
-
-   No personal account is a bypass actor on either ruleset.
-4. Create an org team `maintainers` with **Visible** visibility and write access to the repository, and add the maintainers. `.github/CODEOWNERS` names `@k8s-m8s/maintainers`. GitHub ignores a code owner team that is secret or lacks write access.
-5. Set up [the actions allowlist](#the-actions-allowlist), which allows `anthropics/claude-code-action` and `oven-sh/setup-bun`. Without it, `review.yml` fails at startup.
-
-### C. Claude token
-
-1. Run `claude setup-token`, which creates a long-lived Claude Code OAuth token.
-2. Add the token as `CLAUDE_CODE_OAUTH_TOKEN` in the `review` environment, not as a repository secret.
-3. Set a reminder about a month before the expiry it shows.
-
-### D. Rehearse
-
-1. Run **Detect upstream changes** (`detect.yml`) manually with `fixture` set to `velero`. The automation App opens a `[test fixture]` claim pull request that adds `tested` 1.37.99, which upstream does not state.
-2. Check:
-   - the review comment comes from `k8s-m8s-reviewer[bot]` and marks the finding `mismatch`;
-   - `automerge.yml` comments "Would not merge" and adds `human-merge`;
-   - the **Review with Claude** step's log shows no Bash, WebFetch or GitHub write calls. `post_review.py` would also have rejected the review if the session log showed any.
-3. Close the pull request. The next `detect.yml` run deletes the branch.
 
 ## Design notes
 
