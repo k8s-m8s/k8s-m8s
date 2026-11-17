@@ -2,6 +2,31 @@
 
 How k8s-m8s keeps its data in step with upstream without routine maintainer work, and the rules that keep that safe. Every claim change is still checked against its upstream source before it is published. A script proposes the change, Claude checks it in CI with no GitHub write access, and deterministic scripts post the verdict and merge. Maintainers handle only the riskier changes.
 
+## Who checks what
+
+A claim change passes three separate checks before it can merge. Each one catches mistakes the others can't.
+
+**1. Detect proposes the change (a parser).** Each tool has a hand-written parser in `scripts/extractors.py` that reads its upstream statement with fixed patterns. `detect.yml` runs it daily and opens a pull request for any difference. It is deterministic, cheap and reproducible: the same upstream file always gives the same result. But it only knows the patterns it was written for. If upstream changes so much that the parser can't read it, it raises an error, which becomes a `needs-human` issue. A subtler change can give a tidy, plausible change that is wrong, with no error at all. For example:
+- the table gains a column, and the parser reads the wrong one;
+- a footnote says a version was not tested, and the parser ignores footnotes;
+- the heading changes from "Tested on" to "Expected to work with", so the claim should now be `stated`, not `tested`;
+- the parser's pattern picks up versions from another table on the page.
+
+**2. The review checks what the change means (Claude).** Claude never sees the parser's logic. It reads the proposed change and the upstream file at the recorded commit, and answers one question for each change: does upstream actually say this? It checks the version numbers, the claim level (`tested`, `stated` or `unsupported`) and the wording, and that nothing was inferred. It returns `confirmed`, `mismatch` or `ambiguous`, and it cannot change data or write to GitHub.
+
+**3. The merge gates check the change's form (scripts).** Gate 4 in particular (`check_diff.py claim`) checks that only one tool's file changed, nothing was removed, nothing involving `delisted` changed, the sources are allowlisted, and the diff matches the findings exactly. It checks the shape of the change, not whether upstream says it.
+
+| | Detect | Review | Merge gates |
+|---|---|---|---|
+| Checks | What changed upstream | Whether upstream says it | Whether the change is well-formed and in scope |
+| Reads upstream | With fixed patterns | In full, in context | Not at all |
+| Reliable at | Doing the same thing daily, at no cost | Meaning: tables, footnotes, headings, tested vs stated | Mechanical rules, exactly |
+| Blind spot | Anything its patterns don't anticipate | Not reproducible run to run, so it never changes data itself | Meaning |
+
+The rehearsal shows the split: the fixture adds `tested 1.37.99`, a version upstream never names. It is a well-formed change to one tool, so it passes every mechanical gate. Only the review, reading the actual README, can mark it `mismatch`.
+
+Claude checks changes; it doesn't detect them. Detection has to be reproducible, so a change can be traced and re-run. It also covers every tool every day, while the review runs only when something changed.
+
 ## Workflows
 
 | Workflow | Trigger | What it does |
