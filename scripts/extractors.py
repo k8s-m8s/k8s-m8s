@@ -411,6 +411,32 @@ def istio():
     return releases
 
 
+@extractor("linkerd")
+def linkerd():
+    """The current docs' table of minimum and maximum Kubernetes versions per Linkerd version."""
+    repo, path = "linkerd/website", "linkerd.io/content/docs/reference/k8s-versions.md"
+    sha = commit_sha(repo)
+    text = read(repo, sha, path)
+    title = re.search(r"(?m)^title: (.+)$", text)
+    need(title and title.group(1).strip() == "Supported Kubernetes Versions", "page title changed")
+    rows = [[plain(cell) for cell in row] for row in table_rows(text)]
+    need(rows and rows[0] == ["Linkerd Version", "Minimum Kubernetes Version", "Maximum Kubernetes Version"],
+         "table header changed")
+    commit = file_commit(repo, sha, path)
+    releases = []
+    for row in rows[2:]:
+        need(len(row) == 3 and re.fullmatch(r"2\.\d+", row[0]) and all(re.fullmatch(r"1\.\d+", c) for c in row[1:]),
+             f"unexpected row {row}")
+        need(version_key(row[1]) <= version_key(row[2]), f"range for {row[0]} runs backwards")
+        releases.append({
+            "version": row[0],
+            "stated": {"min": row[1], "max": row[2], "wording": title.group(1).strip()},
+            "source": f"https://github.com/{repo}/blob/main/{path}",
+            "source_commit": commit,
+        })
+    return releases
+
+
 @extractor("calico")
 def calico():
     repo = "tigera/docs"
@@ -442,6 +468,33 @@ def calico():
 
 
 # --- GitOps and delivery -----------------------------------------------------
+
+@extractor("helm")
+def helm():
+    """Helm 4 rows from the current docs, Helm 3 and 2 rows from the version-3 docs."""
+    repo = "helm/helm-www"
+    sha = commit_sha(repo)
+    releases = []
+    for path in ("docs/topics/version_skew.mdx", "versioned_docs/version-3/topics/version_skew.md"):
+        rows = table_rows(read(repo, sha, path))
+        need(rows and rows[0] == ["Helm Version", "Supported Kubernetes Versions"], f"table header changed in {path}")
+        commit = file_commit(repo, sha, path)
+        for row in rows[2:]:
+            version = re.fullmatch(r"(\d+\.\d+)\.x", row[0])
+            supported = re.fullmatch(r"(1\.\d+)\.x - (1\.\d+)\.x", row[1]) if len(row) == 2 else None
+            need(version and supported, f"unexpected row {row} in {path}")
+            high, low = supported.groups()
+            need(version_key(low) <= version_key(high), f"range for {version.group(1)} runs backwards")
+            releases.append({
+                "version": version.group(1),
+                "stated": {"min": low, "max": high, "wording": rows[0][1]},
+                "source": f"https://github.com/{repo}/blob/main/{path}",
+                "source_commit": commit,
+            })
+    versions = [r["version"] for r in releases]
+    need(len(versions) == len(set(versions)), "a Helm version is listed twice")
+    return releases
+
 
 @extractor("argo-cd")
 def argo_cd():
