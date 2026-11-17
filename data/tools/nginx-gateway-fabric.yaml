@@ -1,0 +1,125 @@
+name: nginx-gateway-fabric
+title: NGINX Gateway Fabric
+category: networking
+repo: https://github.com/nginx/nginx-gateway-fabric
+upstream_license: Apache-2.0
+notes: >-
+  The README's technical specifications table gives a minimum Kubernetes
+  version, open-ended ("1.32+"), for one release per minor version. Upstream
+  shows only the latest patch release of each minor, so the claim is recorded
+  for that patch release only; when a newer patch replaces it, the earlier row
+  is kept as no longer listed. The table's Edge row (the unreleased main
+  branch) and the OpenShift table are not recorded.
+releases:
+  - version: "2.8.1"
+    stated:
+      min: "1.32"
+      max: latest
+      wording: software versions NGINX Gateway Fabric supports
+    source: https://github.com/nginx/nginx-gateway-fabric#technical-specifications
+    source_commit: 2f1523891051161cb94b04f334710434ec1561f9
+    verified: 2026-11-17
+  - version: "2.7.2"
+    stated:
+      min: "1.32"
+      max: latest
+      wording: software versions NGINX Gateway Fabric supports
+    source: https://github.com/nginx/nginx-gateway-fabric#technical-specifications
+    source_commit: 2f1523891051161cb94b04f334710434ec1561f9
+    verified: 2026-11-17
+  - version: "2.6.8"
+    stated:
+      min: "1.31"
+      max: latest
+      wording: software versions NGINX Gateway Fabric supports
+    source: https://github.com/nginx/nginx-gateway-fabric#technical-specifications
+    source_commit: 2f1523891051161cb94b04f334710434ec1561f9
+    verified: 2026-11-17
+  - version: "2.5.1"
+    stated:
+      min: "1.31"
+      max: latest
+      wording: software versions NGINX Gateway Fabric supports
+    source: https://github.com/nginx/nginx-gateway-fabric#technical-specifications
+    source_commit: 2f1523891051161cb94b04f334710434ec1561f9
+    verified: 2026-11-17
+  - version: "2.4.2"
+    stated:
+      min: "1.25"
+      max: latest
+      wording: software versions NGINX Gateway Fabric supports
+    source: https://github.com/nginx/nginx-gateway-fabric#technical-specifications
+    source_commit: 2f1523891051161cb94b04f334710434ec1561f9
+    verified: 2026-11-17
+  - version: "2.3.0"
+    stated:
+      min: "1.25"
+      max: latest
+      wording: software versions NGINX Gateway Fabric supports
+    source: https://github.com/nginx/nginx-gateway-fabric#technical-specifications
+    source_commit: 2f1523891051161cb94b04f334710434ec1561f9
+    verified: 2026-11-17
+  - version: "2.2.2"
+    stated:
+      min: "1.25"
+      max: latest
+      wording: software versions NGINX Gateway Fabric supports
+    source: https://github.com/nginx/nginx-gateway-fabric#technical-specifications
+    source_commit: 2f1523891051161cb94b04f334710434ec1561f9
+    verified: 2026-11-17
+  - version: "2.1.4"
+    stated:
+      min: "1.25"
+      max: latest
+      wording: software versions NGINX Gateway Fabric supports
+    source: https://github.com/nginx/nginx-gateway-fabric#technical-specifications
+    source_commit: 2f1523891051161cb94b04f334710434ec1561f9
+    verified: 2026-11-17
+  - version: "2.0.2"
+    stated:
+      min: "1.25"
+      max: latest
+      wording: software versions NGINX Gateway Fabric supports
+    source: https://github.com/nginx/nginx-gateway-fabric#technical-specifications
+    source_commit: 2f1523891051161cb94b04f334710434ec1561f9
+    verified: 2026-11-17
+  - version: "1.6.2"
+    stated:
+      min: "1.25"
+      max: latest
+      wording: software versions NGINX Gateway Fabric supports
+    source: https://github.com/nginx/nginx-gateway-fabric#technical-specifications
+    source_commit: 2f1523891051161cb94b04f334710434ec1561f9
+    verified: 2026-11-17
+  - version: "1.5.1"
+    stated:
+      min: "1.25"
+      max: latest
+      wording: software versions NGINX Gateway Fabric supports
+    source: https://github.com/nginx/nginx-gateway-fabric#technical-specifications
+    source_commit: 2f1523891051161cb94b04f334710434ec1561f9
+    verified: 2026-11-17
+  - version: "1.4.0"
+    stated:
+      min: "1.25"
+      max: latest
+      wording: software versions NGINX Gateway Fabric supports
+    source: https://github.com/nginx/nginx-gateway-fabric#technical-specifications
+    source_commit: 2f1523891051161cb94b04f334710434ec1561f9
+    verified: 2026-11-17
+  - version: "1.3.0"
+    stated:
+      min: "1.25"
+      max: latest
+      wording: software versions NGINX Gateway Fabric supports
+    source: https://github.com/nginx/nginx-gateway-fabric#technical-specifications
+    source_commit: 2f1523891051161cb94b04f334710434ec1561f9
+    verified: 2026-11-17
+  - version: "1.2.0"
+    stated:
+      min: "1.23"
+      max: latest
+      wording: software versions NGINX Gateway Fabric supports
+    source: https://github.com/nginx/nginx-gateway-fabric#technical-specifications
+    source_commit: 2f1523891051161cb94b04f334710434ec1561f9
+    verified: 2026-11-17

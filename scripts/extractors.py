@@ -304,6 +304,36 @@ def envoy_gateway():
     ]
 
 
+@extractor("nginx-gateway-fabric")
+def nginx_gateway_fabric():
+    """The README's technical specifications table: one row per minor, naming its latest patch."""
+    repo, path = "nginx/nginx-gateway-fabric", "README.md"
+    sha = commit_sha(repo)
+    text = read(repo, sha, path)
+    section = re.search(r"(?ms)^## Technical Specifications\n(.*?)(?=^#{2,3} )", text)
+    need(section, "technical specifications section not found")
+    wording = "software versions NGINX Gateway Fabric supports"
+    need(f"lists the {wording}. Only the latest patch release for each minor version is shown." in section.group(1),
+         "the sentence introducing the table changed")
+    rows = table_rows(section.group(1))
+    need(rows and rows[0][:3] == ["NGINX Gateway Fabric", "Gateway API", "Kubernetes"], "table header changed")
+    commit = file_commit(repo, sha, path)
+    releases = []
+    for row in rows[2:]:
+        if row[0] == "Edge":
+            continue  # unreleased main branch
+        version = re.fullmatch(r"\d+\.\d+\.\d+", row[0])
+        minimum = re.fullmatch(r"(1\.\d+)\+", row[2])
+        need(version and minimum, f"unexpected row {row[:3]}")
+        releases.append({
+            "version": row[0],
+            "stated": {"min": minimum.group(1), "max": "latest", "wording": wording},
+            "source": f"https://github.com/{repo}#technical-specifications",
+            "source_commit": commit,
+        })
+    return releases
+
+
 @extractor("external-dns")
 def external_dns():
     repo, path = "kubernetes-sigs/external-dns", "README.md"
