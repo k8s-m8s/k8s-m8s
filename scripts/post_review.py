@@ -59,7 +59,7 @@ def check_verdict(verdict, ids):
         problems.append(f"{len(set(got) - set(ids))} row(s) for findings that do not exist")
     if set(ids) - set(got):
         problems.append(f"{len(set(ids) - set(got))} finding(s) without a row")
-    if any(re.search(r"<!--|-->|k8s-m8s-(review|findings|automerge)", row["reason"]) for row in verdict["rows"]):
+    if any(re.search(r"<!--|--!?>|k8s-m8s-(review|findings|automerge)", row["reason"]) for row in verdict["rows"]):
         problems.append("a reason contains a comment marker; it is shown escaped")
     if any(looks_like_credential(row["reason"]) for row in verdict["rows"]):
         problems.append("a reason contains text that looks like a credential, so no reasons are shown")

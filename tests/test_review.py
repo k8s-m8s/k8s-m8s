@@ -85,6 +85,14 @@ class RenderTest(unittest.TestCase):
         self.assertEqual(len(reviews.REVIEW.findall(body)), 1)
         self.assertIn("&lt;!-- k8s-m8s-review", body)
 
+    def test_any_comment_end_is_rejected(self):
+        for reason in ("closes here --> ok", "closes here --!> ok"):
+            verdict = good_verdict()
+            verdict["rows"][0]["reason"] = reason
+            body = self.render(verdict)
+            self.assertEqual(self.verdict_of(body), "rejected", reason)
+            self.assertNotIn(reason, body)
+
     def test_no_verdict_is_rejected(self):
         self.assertEqual(self.verdict_of(self.render(None, raw="")), "rejected")
 
