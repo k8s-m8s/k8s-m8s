@@ -32,6 +32,7 @@ nav = [
     { "Karpenter" = "tools/karpenter.md" },
     { "KEDA" = "tools/keda.md" },
     { "Kyverno" = "tools/kyverno.md" },
+    { "Linkerd" = "tools/linkerd.md" },
     { "Longhorn" = "tools/longhorn.md" },
     { "Metrics Server" = "tools/metrics-server.md" },
     { "Rook" = "tools/rook.md" },

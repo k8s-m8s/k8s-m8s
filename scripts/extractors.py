@@ -381,6 +381,32 @@ def istio():
     return releases
 
 
+@extractor("linkerd")
+def linkerd():
+    """The current docs' table of minimum and maximum Kubernetes versions per Linkerd version."""
+    repo, path = "linkerd/website", "linkerd.io/content/docs/reference/k8s-versions.md"
+    sha = commit_sha(repo)
+    text = read(repo, sha, path)
+    title = re.search(r"(?m)^title: (.+)$", text)
+    need(title and title.group(1).strip() == "Supported Kubernetes Versions", "page title changed")
+    rows = [[plain(cell) for cell in row] for row in table_rows(text)]
+    need(rows and rows[0] == ["Linkerd Version", "Minimum Kubernetes Version", "Maximum Kubernetes Version"],
+         "table header changed")
+    commit = file_commit(repo, sha, path)
+    releases = []
+    for row in rows[2:]:
+        need(len(row) == 3 and re.fullmatch(r"2\.\d+", row[0]) and all(re.fullmatch(r"1\.\d+", c) for c in row[1:]),
+             f"unexpected row {row}")
+        need(version_key(row[1]) <= version_key(row[2]), f"range for {row[0]} runs backwards")
+        releases.append({
+            "version": row[0],
+            "stated": {"min": row[1], "max": row[2], "wording": title.group(1).strip()},
+            "source": f"https://github.com/{repo}/blob/main/{path}",
+            "source_commit": commit,
+        })
+    return releases
+
+
 @extractor("calico")
 def calico():
     repo = "tigera/docs"
