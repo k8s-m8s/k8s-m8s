@@ -1,0 +1,252 @@
+name: opentelemetry-operator
+title: OpenTelemetry Operator
+category: observability-policy-scaling
+repo: https://github.com/open-telemetry/opentelemetry-operator
+upstream_license: Apache-2.0
+notes: >-
+  The compatibility page's matrix gives a supported Kubernetes range for each
+  operator release, recorded under the release exactly as upstream names it.
+  Upstream lists only recent releases; older rows it removes are kept as no
+  longer listed. A release the matrix marks N/A has no claim and is not
+  recorded, nor are the cert-manager and Prometheus Operator columns.
+releases:
+  - version: "0.163.0"
+    stated:
+      min: "1.25"
+      max: "1.37"
+      wording: supported Kubernetes versions
+    source: https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/getting-started/compatibility.md#compatibility-matrix
+    source_commit: 902d101560c6935d205eb611ea67d327fad81de9
+    verified: 2026-11-17
+  - version: "0.162.0"
+    stated:
+      min: "1.25"
+      max: "1.37"
+      wording: supported Kubernetes versions
+    source: https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/getting-started/compatibility.md#compatibility-matrix
+    source_commit: 902d101560c6935d205eb611ea67d327fad81de9
+    verified: 2026-11-17
+  - version: "0.161.0"
+    stated:
+      min: "1.25"
+      max: "1.37"
+      wording: supported Kubernetes versions
+    source: https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/getting-started/compatibility.md#compatibility-matrix
+    source_commit: 902d101560c6935d205eb611ea67d327fad81de9
+    verified: 2026-11-17
+  - version: "0.160.0"
+    stated:
+      min: "1.25"
+      max: "1.37"
+      wording: supported Kubernetes versions
+    source: https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/getting-started/compatibility.md#compatibility-matrix
+    source_commit: 902d101560c6935d205eb611ea67d327fad81de9
+    verified: 2026-11-17
+  - version: "0.159.0"
+    stated:
+      min: "1.25"
+      max: "1.36"
+      wording: supported Kubernetes versions
+    source: https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/getting-started/compatibility.md#compatibility-matrix
+    source_commit: 902d101560c6935d205eb611ea67d327fad81de9
+    verified: 2026-11-17
+  - version: "0.158.0"
+    stated:
+      min: "1.25"
+      max: "1.36"
+      wording: supported Kubernetes versions
+    source: https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/getting-started/compatibility.md#compatibility-matrix
+    source_commit: 902d101560c6935d205eb611ea67d327fad81de9
+    verified: 2026-11-17
+  - version: "0.157.0"
+    stated:
+      min: "1.25"
+      max: "1.36"
+      wording: supported Kubernetes versions
+    source: https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/getting-started/compatibility.md#compatibility-matrix
+    source_commit: 902d101560c6935d205eb611ea67d327fad81de9
+    verified: 2026-11-17
+  - version: "0.156.0"
+    stated:
+      min: "1.25"
+      max: "1.35"
+      wording: supported Kubernetes versions
+    source: https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/getting-started/compatibility.md#compatibility-matrix
+    source_commit: 902d101560c6935d205eb611ea67d327fad81de9
+    verified: 2026-11-17
+  - version: "0.155.0"
+    stated:
+      min: "1.25"
+      max: "1.35"
+      wording: supported Kubernetes versions
+    source: https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/getting-started/compatibility.md#compatibility-matrix
+    source_commit: 902d101560c6935d205eb611ea67d327fad81de9
+    verified: 2026-11-17
+  - version: "0.154.0"
+    stated:
+      min: "1.25"
+      max: "1.35"
+      wording: supported Kubernetes versions
+    source: https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/getting-started/compatibility.md#compatibility-matrix
+    source_commit: 902d101560c6935d205eb611ea67d327fad81de9
+    verified: 2026-11-17
+  - version: "0.153.0"
+    stated:
+      min: "1.25"
+      max: "1.35"
+      wording: supported Kubernetes versions
+    source: https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/getting-started/compatibility.md#compatibility-matrix
+    source_commit: 902d101560c6935d205eb611ea67d327fad81de9
+    verified: 2026-11-17
+  - version: "0.152.0"
+    stated:
+      min: "1.25"
+      max: "1.35"
+      wording: supported Kubernetes versions
+    source: https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/getting-started/compatibility.md#compatibility-matrix
+    source_commit: 902d101560c6935d205eb611ea67d327fad81de9
+    verified: 2026-11-17
+  - version: "0.151.0"
+    stated:
+      min: "1.25"
+      max: "1.35"
+      wording: supported Kubernetes versions
+    source: https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/getting-started/compatibility.md#compatibility-matrix
+    source_commit: 902d101560c6935d205eb611ea67d327fad81de9
+    verified: 2026-11-17
+  - version: "0.150.0"
+    stated:
+      min: "1.25"
+      max: "1.35"
+      wording: supported Kubernetes versions
+    source: https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/getting-started/compatibility.md#compatibility-matrix
+    source_commit: 902d101560c6935d205eb611ea67d327fad81de9
+    verified: 2026-11-17
+  - version: "0.149.0"
+    stated:
+      min: "1.25"
+      max: "1.35"
+      wording: supported Kubernetes versions
+    source: https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/getting-started/compatibility.md#compatibility-matrix
+    source_commit: 902d101560c6935d205eb611ea67d327fad81de9
+    verified: 2026-11-17
+  - version: "0.148.0"
+    stated:
+      min: "1.25"
+      max: "1.35"
+      wording: supported Kubernetes versions
+    source: https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/getting-started/compatibility.md#compatibility-matrix
+    source_commit: 902d101560c6935d205eb611ea67d327fad81de9
+    verified: 2026-11-17
+  - version: "0.147.0"
+    stated:
+      min: "1.25"
+      max: "1.35"
+      wording: supported Kubernetes versions
+    source: https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/getting-started/compatibility.md#compatibility-matrix
+    source_commit: 902d101560c6935d205eb611ea67d327fad81de9
+    verified: 2026-11-17
+  - version: "0.146.0"
+    stated:
+      min: "1.25"
+      max: "1.35"
+      wording: supported Kubernetes versions
+    source: https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/getting-started/compatibility.md#compatibility-matrix
+    source_commit: 902d101560c6935d205eb611ea67d327fad81de9
+    verified: 2026-11-17
+  - version: "0.145.0"
+    stated:
+      min: "1.25"
+      max: "1.35"
+      wording: supported Kubernetes versions
+    source: https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/getting-started/compatibility.md#compatibility-matrix
+    source_commit: 902d101560c6935d205eb611ea67d327fad81de9
+    verified: 2026-11-17
+  - version: "0.144.0"
+    stated:
+      min: "1.25"
+      max: "1.35"
+      wording: supported Kubernetes versions
+    source: https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/getting-started/compatibility.md#compatibility-matrix
+    source_commit: 902d101560c6935d205eb611ea67d327fad81de9
+    verified: 2026-11-17
+  - version: "0.143.0"
+    stated:
+      min: "1.25"
+      max: "1.35"
+      wording: supported Kubernetes versions
+    source: https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/getting-started/compatibility.md#compatibility-matrix
+    source_commit: 902d101560c6935d205eb611ea67d327fad81de9
+    verified: 2026-11-17
+  - version: "0.142.0"
+    stated:
+      min: "1.25"
+      max: "1.35"
+      wording: supported Kubernetes versions
+    source: https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/getting-started/compatibility.md#compatibility-matrix
+    source_commit: 902d101560c6935d205eb611ea67d327fad81de9
+    verified: 2026-11-17
+  - version: "0.141.0"
+    stated:
+      min: "1.25"
+      max: "1.34"
+      wording: supported Kubernetes versions
+    source: https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/getting-started/compatibility.md#compatibility-matrix
+    source_commit: 902d101560c6935d205eb611ea67d327fad81de9
+    verified: 2026-11-17
+  - version: "0.140.0"
+    stated:
+      min: "1.25"
+      max: "1.33"
+      wording: supported Kubernetes versions
+    source: https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/getting-started/compatibility.md#compatibility-matrix
+    source_commit: 902d101560c6935d205eb611ea67d327fad81de9
+    verified: 2026-11-17
+  - version: "0.139.0"
+    stated:
+      min: "1.25"
+      max: "1.33"
+      wording: supported Kubernetes versions
+    source: https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/getting-started/compatibility.md#compatibility-matrix
+    source_commit: 902d101560c6935d205eb611ea67d327fad81de9
+    verified: 2026-11-17
+  - version: "0.138.0"
+    stated:
+      min: "1.25"
+      max: "1.33"
+      wording: supported Kubernetes versions
+    source: https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/getting-started/compatibility.md#compatibility-matrix
+    source_commit: 902d101560c6935d205eb611ea67d327fad81de9
+    verified: 2026-11-17
+  - version: "0.137.0"
+    stated:
+      min: "1.25"
+      max: "1.33"
+      wording: supported Kubernetes versions
+    source: https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/getting-started/compatibility.md#compatibility-matrix
+    source_commit: 902d101560c6935d205eb611ea67d327fad81de9
+    verified: 2026-11-17
+  - version: "0.136.0"
+    stated:
+      min: "1.25"
+      max: "1.33"
+      wording: supported Kubernetes versions
+    source: https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/getting-started/compatibility.md#compatibility-matrix
+    source_commit: 902d101560c6935d205eb611ea67d327fad81de9
+    verified: 2026-11-17
+  - version: "0.135.0"
+    stated:
+      min: "1.25"
+      max: "1.33"
+      wording: supported Kubernetes versions
+    source: https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/getting-started/compatibility.md#compatibility-matrix
+    source_commit: 902d101560c6935d205eb611ea67d327fad81de9
+    verified: 2026-11-17
+  - version: "0.134.0"
+    stated:
+      min: "1.25"
+      max: "1.33"
+      wording: supported Kubernetes versions
+    source: https://github.com/open-telemetry/opentelemetry-operator/blob/main/docs/getting-started/compatibility.md#compatibility-matrix
+    source_commit: 902d101560c6935d205eb611ea67d327fad81de9
+    verified: 2026-11-17

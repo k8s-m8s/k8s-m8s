@@ -643,6 +643,37 @@ def kyverno_statement(text):
     return version.group(1), span.group(1), span.group(2)
 
 
+@extractor("opentelemetry-operator")
+def opentelemetry_operator():
+    """The compatibility matrix: a supported Kubernetes range for each operator release."""
+    repo, path = "open-telemetry/opentelemetry-operator", "docs/getting-started/compatibility.md"
+    sha = commit_sha(repo)
+    text = read(repo, sha, path)
+    wording = "supported Kubernetes versions"
+    need(f"precisely shows the {wording} for each operator release" in text, "sentence introducing the matrix changed")
+    rows = table_rows(text)
+    start = next((i for i, r in enumerate(rows) if r[:2] == ["OpenTelemetry Operator", "Kubernetes"]), None)
+    need(start is not None, "compatibility matrix not found")
+    commit = file_commit(repo, sha, path)
+    releases = []
+    for row in rows[start + 2:]:
+        need(len(row) == 4, f"unexpected row {row}")
+        if row[1] == "N/A":
+            continue  # upstream makes no claim for this release
+        version = re.fullmatch(r"v(\d+\.\d+\.\d+)", row[0])
+        supported = re.fullmatch(r"v(1\.\d+) to v(1\.\d+)", row[1])
+        need(version and supported, f"unexpected row {row[:2]}")
+        low, high = supported.groups()
+        need(version_key(low) <= version_key(high), f"range for {row[0]} runs backwards")
+        releases.append({
+            "version": version.group(1),
+            "stated": {"min": low, "max": high, "wording": wording},
+            "source": f"https://github.com/{repo}/blob/main/{path}#compatibility-matrix",
+            "source_commit": commit,
+        })
+    return releases
+
+
 @extractor("kyverno")
 def kyverno():
     # The page names only the one supported release, so earlier releases are
