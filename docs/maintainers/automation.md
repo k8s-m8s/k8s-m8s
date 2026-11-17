@@ -43,7 +43,7 @@ Labels: `claim-change`, `window-change`, `bookkeeping`, `human-merge`, `needs-hu
 1. **Jobs that hold secrets run from `main`.** A job that uses environment `automation` or `review`, mints an App token or reads a secret may be triggered only by `schedule`, `workflow_dispatch`, `workflow_run` or `issue_comment`. GitHub takes those workflow definitions from the default branch. No workflow uses `pull_request_target`. `validate.yml` runs on `pull_request` with no secrets and `contents: read`.
 2. **Pull request content is data, never code.** In a job that holds secrets, every script runs from a `main` checkout (the workspace root, or `rules/` in `review.yml`). The pull request is checked out at its head SHA into `pr/` with `persist-credentials: false` and read with git, or read with `git show` from the `main` checkout. Nothing under `pr/` is executed, imported, sourced, installed or used as configuration. `review.yml` deletes `pr/` before Claude starts.
 3. **An App token exists only in the step that mints it and the next step.** It is minted with `actions/create-github-app-token` directly before the step that uses it, with `permission-*` inputs and no `owner` or `repositories` (so it covers this repository only). It never reaches `GITHUB_ENV`, job `env` or job outputs.
-4. **Jobs that hold tokens are kept small.** They use only `actions/checkout`, `actions/setup-python`, `actions/create-github-app-token`, `actions/download-artifact`, `anthropics/claude-code-action` (review job only) and repository scripts run from `main`. Every action is pinned by commit SHA. (`claude-code-action` itself uses `oven-sh/setup-bun` internally, pinned by SHA inside the action.)
+4. **Jobs that hold tokens are kept small.** They use only `actions/checkout`, `actions/setup-python`, `actions/create-github-app-token`, `actions/download-artifact`, `anthropics/claude-code-action` (review job only) and repository scripts run from `main`. Every action is pinned by commit SHA. (`claude-code-action` itself uses `oven-sh/setup-bun` internally, pinned by SHA inside the action.) `tests/test_workflows.py` enforces this list. The repository's Actions policy also blocks third-party actions other than these two: see [the actions allowlist](#the-actions-allowlist).
 5. **Dependencies are hash-pinned.** Jobs that hold secrets install with `pip install --require-hashes -r requirements.lock`, from `main`. Regenerate the lock after changing `requirements.txt`: `pip-compile --generate-hashes --allow-unsafe --strip-extras --no-emit-index-url --output-file=requirements.lock requirements.txt`.
 6. **Permissions are explicit.** Every workflow sets `permissions: {}` and grants permissions per job.
 7. **No checkout keeps credentials** (`persist-credentials: false` everywhere). Commits are made through the GitHub API, so no git credentials are ever written.
@@ -109,6 +109,22 @@ For the first 4 weeks `AUTOMERGE_DRY_RUN=true` stays set. Claim pull requests ge
 
 **Update the actions.** Dependabot proposes action and pip updates monthly, grouped. They never merge automatically. Review updates to `anthropics/claude-code-action`, `actions/create-github-app-token` and Zensical line by line. For `claude-code-action`, check the release notes for changes to permission modes, `allowed_bots`, `structured_output` and `execution_file`. Then re-run the fixture rehearsal.
 
+### The actions allowlist
+
+The allowlist decides which actions may run at all. The workflow files decide which version runs: every action there is pinned to a full commit SHA, which the repository setting below and `tests/test_workflows.py` both enforce. An upgrade is therefore a reviewed change to a workflow file, not a settings change.
+
+The settings are under **Settings → Actions → General → Actions permissions**. They can also be set at organization level, which caps what each repository may allow:
+
+- **Allow k8s-m8s, and select non-k8s-m8s, actions and reusable workflows**, with **Allow actions created by GitHub** ticked and **Allow actions by Marketplace verified creators** unticked.
+- **Allow specified actions and reusable workflows**:
+  ```
+  anthropics/claude-code-action@*,
+  oven-sh/setup-bun@*,
+  ```
+- **Require actions to be pinned to a full-length commit SHA**: on.
+
+`oven-sh/setup-bun` is on the list because `claude-code-action` runs it internally, and the allowlist applies to nested actions too. A workflow that uses an action missing from the list fails at startup ("This run likely failed because of a workflow file issue") before any job runs. Add a new third-party action to the list only after deciding to trust its publisher, and add it to the allowlists in `tests/test_workflows.py` in the same pull request.
+
 ## Setup
 
 Do parts A to C before merging the automation workflows. GitHub creates an environment that a workflow refers to on first use, and that environment would have no branch restriction. Part D needs the merged workflows.
@@ -142,7 +158,8 @@ If a name is taken, keep the `k8s-m8s-` prefix and a role word, and change `AUTO
      - add `k8s-m8s-automation` as the only bypass actor. The App needs to force-push its own branches when it rewrites a claim pull request.
 
    No personal account is a bypass actor on either ruleset.
-4. Create an org team `maintainers` with write access to the repository, and add the maintainers. `.github/CODEOWNERS` names `@k8s-m8s/maintainers`.
+4. Create an org team `maintainers` with **Visible** visibility and write access to the repository, and add the maintainers. `.github/CODEOWNERS` names `@k8s-m8s/maintainers`. GitHub ignores a code owner team that is secret or lacks write access.
+5. Set up [the actions allowlist](#the-actions-allowlist), which allows `anthropics/claude-code-action` and `oven-sh/setup-bun`. Without it, `review.yml` fails at startup.
 
 ### C. Claude subscription token
 
