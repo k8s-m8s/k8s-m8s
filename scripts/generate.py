@@ -191,6 +191,17 @@ def tool_page(tool, window):
     return "\n".join(parts)
 
 
+def jump_list(by_category):
+    """One line per category linking to each tool's section, for finding a tool without scrolling."""
+    lines = []
+    for category, title in CATEGORY_TITLES.items():
+        group = sorted(by_category.get(category, []), key=lambda t: t["title"].lower())
+        if group:
+            links = " · ".join(f"[{tool['title']}](#{tool['name']})" for tool in group)
+            lines.append(f"**{title}:** {links}")
+    return "\n\n".join(lines) + "\n"
+
+
 def matrix_page(tools, window):
     description = (f"Compatibility of {len(tools)} Kubernetes tools with Kubernetes {window_text(window)}, "
                    "with every claim linked to its upstream source.")
@@ -212,13 +223,14 @@ def matrix_page(tools, window):
     by_category = {}
     for tool in tools:
         by_category.setdefault(tool["category"], []).append(tool)
+    parts.append(jump_list(by_category))
     for category, title in CATEGORY_TITLES.items():
         group = by_category.get(category)
         if not group:
             continue
         parts.append(f"## {title}\n")
         for tool in sorted(group, key=lambda t: t["title"].lower()):
-            parts.append(f"### [{tool['title']}](tools/{tool['name']}.md)\n")
+            parts.append(f"### [{tool['title']}](tools/{tool['name']}.md) {{ #{tool['name']} }}\n")
             covered = in_window(current(tool["releases"]), window)
             if covered:
                 parts.append(matrix_table("Version", covered, window) + "\n")
