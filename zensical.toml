@@ -28,6 +28,7 @@ nav = [
     { "External Secrets Operator" = "tools/external-secrets.md" },
     { "ExternalDNS" = "tools/external-dns.md" },
     { "Flux" = "tools/flux.md" },
+    { "Helm" = "tools/helm.md" },
     { "Istio" = "tools/istio.md" },
     { "Karpenter" = "tools/karpenter.md" },
     { "KEDA" = "tools/keda.md" },
