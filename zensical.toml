@@ -38,6 +38,7 @@ nav = [
     { "Longhorn" = "tools/longhorn.md" },
     { "Metrics Server" = "tools/metrics-server.md" },
     { "NGINX Gateway Fabric" = "tools/nginx-gateway-fabric.md" },
+    { "OpenTelemetry Operator" = "tools/opentelemetry-operator.md" },
     { "Rook" = "tools/rook.md" },
     { "Velero" = "tools/velero.md" },
   ] },
