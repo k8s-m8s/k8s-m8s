@@ -794,6 +794,50 @@ def karpenter():
 
 # --- workloads and runtimes --------------------------------------------------
 
+@extractor("cluster-api")
+def cluster_api():
+    """The core provider's support matrix (rows: Kubernetes minors, columns: Cluster API
+    minors). Only plain ticks are recorded: "(only workload)" cells and cells that apply
+    from a given patch release on ("✓ >= v1.13.1") are left out (see the tool's notes)."""
+    repo, path = "kubernetes-sigs/cluster-api", "docs/book/src/reference/versions.md"
+    sha = commit_sha(repo)
+    text = read(repo, sha, path)
+    section = re.search(r"(?ms)^### Core provider \(`cluster-api-controller`\)\n(.*?)(?=^### )", text)
+    need(section, "core provider section not found")
+    wording = "support matrix"
+    need(f"defines the {wording} for the Cluster API core provider" in section.group(1),
+         "the sentence introducing the matrix changed")
+    rows = table_rows(section.group(1))
+    need(rows and rows[0][0] == "", "matrix header changed")
+    versions = []
+    for cell in rows[0][1:]:
+        version = re.fullmatch(r"v(\d+\.\d+)(, _Maintenance Mode_)?", cell)
+        need(version, f"unexpected column '{cell}'")
+        versions.append(version.group(1))
+    supported = {v: [] for v in versions}
+    for row in rows[2:]:
+        minor = re.fullmatch(r"Kubernetes v(1\.\d+)", row[0])
+        need(minor and len(row) == len(versions) + 1, f"unexpected row {row[:2]}")
+        for version, cell in zip(versions, row[1:]):
+            need(re.fullmatch(r"|✓|✓ \(only workload\)|✓ >= v\d+\.\d+\.\d+", cell), f"unexpected cell '{cell}'")
+            if cell == "✓":
+                supported[version].append(minor.group(1))
+    commit = file_commit(repo, sha, path)
+    releases = []
+    for version, minors_ in supported.items():
+        if not minors_:
+            continue
+        minors_ = sorted(minors_, key=version_key)
+        need(contiguous(minors_), f"supported versions for {version} are not one range")
+        releases.append({
+            "version": version,
+            "stated": {"min": minors_[0], "max": minors_[-1], "wording": wording},
+            "source": f"https://github.com/{repo}/blob/main/{path}#core-provider-cluster-api-controller",
+            "source_commit": commit,
+        })
+    return releases
+
+
 @extractor("kubevirt")
 def kubevirt():
     """The sig-release support matrix. Upstream defines an EOL cell as a Kubernetes

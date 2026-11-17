@@ -22,6 +22,7 @@ nav = [
     { "Calico" = "tools/calico.md" },
     { "cert-manager" = "tools/cert-manager.md" },
     { "Cilium" = "tools/cilium.md" },
+    { "Cluster API" = "tools/cluster-api.md" },
     { "Cluster Autoscaler" = "tools/cluster-autoscaler.md" },
     { "Contour" = "tools/contour.md" },
     { "Envoy Gateway" = "tools/envoy-gateway.md" },

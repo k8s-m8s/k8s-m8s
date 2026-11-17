@@ -1,0 +1,40 @@
+name: cluster-api
+title: Cluster API
+category: workloads-runtimes
+repo: https://github.com/kubernetes-sigs/cluster-api
+upstream_license: Apache-2.0
+notes: >-
+  The versions page's support matrix for the core provider marks, for each
+  Cluster API minor release, the Kubernetes minors it supports; the Kubeadm
+  bootstrap and control plane providers follow the same matrix. Only plain
+  ticks are recorded. Cells marked "only workload" (supported for workload
+  clusters, not the management cluster) are not recorded, nor are cells that
+  apply only from a given patch release on, such as 1.37 support from 1.14.1
+  on, because recording them for the whole minor release would extend the
+  claim to its earlier patches. The matrix covers only recent Cluster API
+  releases.
+releases:
+  - version: "1.15"
+    stated:
+      min: "1.34"
+      max: "1.37"
+      wording: support matrix
+    source: https://github.com/kubernetes-sigs/cluster-api/blob/main/docs/book/src/reference/versions.md#core-provider-cluster-api-controller
+    source_commit: 7ea806e8f08f57c33d9421e31ddeb630de0e7acf
+    verified: 2026-11-17
+  - version: "1.14"
+    stated:
+      min: "1.33"
+      max: "1.36"
+      wording: support matrix
+    source: https://github.com/kubernetes-sigs/cluster-api/blob/main/docs/book/src/reference/versions.md#core-provider-cluster-api-controller
+    source_commit: 7ea806e8f08f57c33d9421e31ddeb630de0e7acf
+    verified: 2026-11-17
+  - version: "1.13"
+    stated:
+      min: "1.32"
+      max: "1.35"
+      wording: support matrix
+    source: https://github.com/kubernetes-sigs/cluster-api/blob/main/docs/book/src/reference/versions.md#core-provider-cluster-api-controller
+    source_commit: 7ea806e8f08f57c33d9421e31ddeb630de0e7acf
+    verified: 2026-11-17
