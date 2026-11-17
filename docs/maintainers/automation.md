@@ -134,7 +134,7 @@ If a name is taken, keep the `k8s-m8s-` prefix and a role word, and change `AUTO
 2. Under **Settings → Secrets and variables → Actions → Variables**, add the four repository variables above.
 3. Under **Settings → Rules → Rulesets**:
    - **Edit the existing `default` ruleset** (on `main`):
-     - set required approvals to 1, and dismiss stale approvals on new pushes;
+     - dismiss stale approvals on new pushes. Keep required approvals at 0 while there is one maintainer, because GitHub does not let anyone approve their own pull request. Raise it to 1 once a second maintainer has write access;
      - keep the required `validate` check, the force-push and deletion blocks, and linear history;
      - add `k8s-m8s-automation` as the only bypass actor.
    - **Create a ruleset named `automated`** for `refs/heads/automated/**`:
