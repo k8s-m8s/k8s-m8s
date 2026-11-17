@@ -1,0 +1,49 @@
+name: consul-k8s
+title: Consul on Kubernetes
+category: networking
+repo: https://github.com/hashicorp/consul-k8s
+# The statement lives in HashiCorp's documentation repository (the source of
+# developer.hashicorp.com, which the main repo's README links to).
+official_sources:
+  - https://github.com/hashicorp/web-unified-docs
+upstream_license: MPL-2.0
+notes: >-
+  The Consul on Kubernetes version compatibility page gives a compatible
+  Kubernetes range for each consul-k8s release (the Helm chart, control plane
+  and CLI share one version), read from the newest versioned Consul
+  documentation. The table is keyed by Consul version and lists only some
+  releases. The separate table of extended ranges for Consul Enterprise Long
+  Term Support releases and the OpenShift column are not recorded.
+releases:
+  - version: "1.9"
+    stated:
+      min: "1.30"
+      max: "1.35"
+      wording: Compatible Kubernetes versions
+    source: https://github.com/hashicorp/web-unified-docs/blob/main/content/consul/v1.22.x/content/partials/tables/compatibility/k8s/version.mdx
+    source_commit: f1baea1ff888c4c2fb30053251747c59f5d5e57f
+    verified: 2026-11-17
+  - version: "1.8"
+    stated:
+      min: "1.30"
+      max: "1.35"
+      wording: Compatible Kubernetes versions
+    source: https://github.com/hashicorp/web-unified-docs/blob/main/content/consul/v1.22.x/content/partials/tables/compatibility/k8s/version.mdx
+    source_commit: f1baea1ff888c4c2fb30053251747c59f5d5e57f
+    verified: 2026-11-17
+  - version: "1.7"
+    stated:
+      min: "1.30"
+      max: "1.33"
+      wording: Compatible Kubernetes versions
+    source: https://github.com/hashicorp/web-unified-docs/blob/main/content/consul/v1.22.x/content/partials/tables/compatibility/k8s/version.mdx
+    source_commit: f1baea1ff888c4c2fb30053251747c59f5d5e57f
+    verified: 2026-11-17
+  - version: "1.3"
+    stated:
+      min: "1.25"
+      max: "1.28"
+      wording: Compatible Kubernetes versions
+    source: https://github.com/hashicorp/web-unified-docs/blob/main/content/consul/v1.22.x/content/partials/tables/compatibility/k8s/version.mdx
+    source_commit: f1baea1ff888c4c2fb30053251747c59f5d5e57f
+    verified: 2026-11-17

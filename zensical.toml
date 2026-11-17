@@ -25,6 +25,7 @@ nav = [
     { "CloudNativePG" = "tools/cloudnative-pg.md" },
     { "Cluster API" = "tools/cluster-api.md" },
     { "Cluster Autoscaler" = "tools/cluster-autoscaler.md" },
+    { "Consul on Kubernetes" = "tools/consul-k8s.md" },
     { "Contour" = "tools/contour.md" },
     { "Envoy Gateway" = "tools/envoy-gateway.md" },
     { "External Secrets Operator" = "tools/external-secrets.md" },
