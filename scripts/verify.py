@@ -47,16 +47,34 @@ def reconcile(releases, upstream, today, mode):
 
     mode "report" changes nothing, "write" refreshes verified and source_commit
     on entries that still match, and "apply" also takes over upstream's changed,
-    new and removed rows. Returns (matching, differences, problems): the number
-    of entries that match, messages for differences (applied in "apply" mode),
-    and messages for things only a human can resolve.
+    new and removed rows. An upstream row that carries `delisted` was read
+    from the source's history: it is compared like any other row, including
+    its delisted date. Returns (matching, differences, problems): the number
+    of current entries that match, messages for differences (applied in
+    "apply" mode), and messages for things only a human can resolve.
     """
     by_label = {release_label(r): r for r in upstream}
     matching, differences, problems = 0, [], []
     for release in releases:
         label = release_label(release)
         found = by_label.pop(label, None)
-        if "delisted" in release:
+        if found and "delisted" in found:
+            if claims(release) == claims(found) and release.get("delisted") == found["delisted"]:
+                if mode != "report":
+                    release.update(source_commit=found["source_commit"], verified=today)
+                continue
+            if "delisted" in release:
+                differences.append(f"{label}: upstream history differs ({describe(claims(release), claims(found))}; "
+                                   f"delisted: recorded {release['delisted']}, upstream {found['delisted']})")
+            else:
+                differences.append(f"{label}: no longer listed upstream; last values taken from the commit "
+                                   f"that last listed it, delisted {found['delisted']}")
+            if mode == "apply":
+                for field in CLAIM_FIELDS:
+                    release.pop(field, None)
+                release.update(claims(found), source_commit=found["source_commit"],
+                               delisted=found["delisted"], verified=today)
+        elif "delisted" in release:
             if found:
                 problems.append(f"{label}: marked delisted but upstream lists it again")
         elif not found:
@@ -76,7 +94,10 @@ def reconcile(releases, upstream, today, mode):
             if mode != "report":
                 release.update(source_commit=found["source_commit"], verified=today)
     for label in sorted(by_label):
-        differences.append(f"{label}: listed upstream but not recorded")
+        if "delisted" in by_label[label]:
+            differences.append(f"{label}: in upstream's history (delisted {by_label[label]['delisted']}) but not recorded")
+        else:
+            differences.append(f"{label}: listed upstream but not recorded")
         if mode == "apply":
             found = by_label[label]
             releases.append({**found, **claims(found), "verified": today})

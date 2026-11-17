@@ -10,7 +10,12 @@ upstream_license: Apache-2.0
 notes: >-
   The releases page states a supported Kubernetes range for the one currently
   supported Kyverno release only. It does not say which versions were tested.
-  The recorded commit is from the website repository.
+  Earlier releases were read from the page's git history: each from the last
+  commit that still named it, and its delisted date is the date of the commit
+  that replaced it. 1.19's range was widened to 1.36 before it was replaced;
+  the last value is recorded. Revisions before 2026-04-15, including the
+  page's earlier paths, contain no such statement. The recorded commits are
+  from the website repository.
 releases:
   - version: "1.20"
     stated:
@@ -19,4 +24,31 @@ releases:
       wording: Kubernetes Versions Supported
     source: https://github.com/kyverno/website/blob/main/src/content/docs/docs/installation/releases.md
     source_commit: 241122ad901e9e7ff8f14136d7969677c7915073
-    verified: 2026-11-16
+    verified: 2026-11-17
+  - version: "1.19"
+    stated:
+      min: "1.33"
+      max: "1.36"
+      wording: Kubernetes Versions Supported
+    source: https://github.com/kyverno/website/blob/1ef341b470090c55699ca845b033d42107dd9a79/src/content/docs/docs/installation/releases.md
+    source_commit: 1ef341b470090c55699ca845b033d42107dd9a79
+    verified: 2026-11-17
+    delisted: 2026-11-08
+  - version: "1.18"
+    stated:
+      min: "1.33"
+      max: "1.35"
+      wording: Kubernetes Versions Supported
+    source: https://github.com/kyverno/website/blob/049be5c9e8d7af5cac074f2a4b7cb0603001a295/src/content/docs/docs/installation/releases.md
+    source_commit: 049be5c9e8d7af5cac074f2a4b7cb0603001a295
+    verified: 2026-11-17
+    delisted: 2026-08-19
+  - version: "1.17"
+    stated:
+      min: "1.32"
+      max: "1.35"
+      wording: Kubernetes Versions Supported
+    source: https://github.com/kyverno/website/blob/6a1b021f986a32e3a870c5a4b87f51462c6f59f1/src/content/docs/docs/installation/releases.md
+    source_commit: 6a1b021f986a32e3a870c5a4b87f51462c6f59f1
+    verified: 2026-11-17
+    delisted: 2026-04-30
