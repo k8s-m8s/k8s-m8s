@@ -34,6 +34,7 @@ nav = [
     { "Kyverno" = "tools/kyverno.md" },
     { "Longhorn" = "tools/longhorn.md" },
     { "Metrics Server" = "tools/metrics-server.md" },
+    { "NGINX Gateway Fabric" = "tools/nginx-gateway-fabric.md" },
     { "Rook" = "tools/rook.md" },
     { "Velero" = "tools/velero.md" },
   ] },
