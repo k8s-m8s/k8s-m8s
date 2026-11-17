@@ -1,6 +1,6 @@
 name: cluster-api
 title: Cluster API
-category: workloads-runtimes
+category: cluster-lifecycle
 repo: https://github.com/kubernetes-sigs/cluster-api
 upstream_license: Apache-2.0
 notes: >-

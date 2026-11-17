@@ -46,6 +46,7 @@ CATEGORY_TITLES = {
     "security": "Security and secrets",
     "observability-policy-scaling": "Observability, policy and scaling",
     "workloads-runtimes": "Workloads and runtimes",
+    "cluster-lifecycle": "Cluster lifecycle",
 }
 
 
