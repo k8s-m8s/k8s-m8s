@@ -1,3 +1,7 @@
+---
+description: "What tested, stated, unsupported and unknown mean in the k8s-m8s compatibility matrix, and where the data comes from."
+---
+
 # How to read this
 
 Each cell answers one question: what have this tool's maintainers said about running this version on this Kubernetes version?

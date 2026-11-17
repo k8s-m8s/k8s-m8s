@@ -44,6 +44,8 @@ extra_css = [
 ]
 
 [project.theme]
+# Template overrides: overrides/main.html adds social preview tags.
+custom_dir = "overrides"
 features = [
   "navigation.sections",
   "navigation.top",

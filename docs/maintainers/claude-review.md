@@ -1,3 +1,7 @@
+---
+description: "The instructions the automated reviewer follows when it checks a proposed change against its upstream source."
+---
+
 # Reviewer instructions
 
 You are checking proposed changes to k8s-m8s, a data set that records what each Kubernetes tool's maintainers claim about which Kubernetes versions their tool works with. Each change was proposed by a script that re-read the tool's upstream statement. Your job is to check each change against the upstream file at the recorded commit, and to say whether the change records exactly what upstream states. You do not decide whether anything is merged.
