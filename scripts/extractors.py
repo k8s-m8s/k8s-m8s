@@ -249,6 +249,41 @@ def longhorn():
 
 # --- networking --------------------------------------------------------------
 
+@extractor("cloudnative-pg")
+def cloudnative_pg():
+    """Both release tables' "Supported Kubernetes versions" column. The current table's
+    "Tested, but not supported" column is left out (see the tool's notes)."""
+    repo, path = "cloudnative-pg/cloudnative-pg", "docs/src/supported_releases.md"
+    sha = commit_sha(repo)
+    text = read(repo, sha, path)
+    wording = "Supported Kubernetes versions"
+    commit = file_commit(repo, sha, path)
+    releases, header, tables = [], None, 0
+    for row in table_rows(text):
+        if row[0] == "Version":
+            header = row if wording in row else None
+            tables += header is not None
+            continue
+        if not header or set(row[0]) <= set("-"):
+            continue
+        need(len(row) == len(header), f"unexpected row {row[:2]}")
+        if row[0] == "main":
+            continue  # development branch, no release
+        version = re.fullmatch(r"(\d+\.\d+)\.x", row[0])
+        minors_listed = [m.strip() for m in row[header.index(wording)].split(",")]
+        need(version and all(re.fullmatch(r"1\.\d+", m) for m in minors_listed), f"unexpected row {row[:2]}")
+        supported = sorted(minors_listed, key=version_key)
+        need(contiguous(supported), f"supported versions for {row[0]} are not one range")
+        releases.append({
+            "version": version.group(1),
+            "stated": {"min": supported[0], "max": supported[-1], "wording": wording},
+            "source": f"https://github.com/{repo}/blob/main/{path}",
+            "source_commit": commit,
+        })
+    need(tables == 2, f"expected two tables with a '{wording}' column, found {tables}")
+    return releases
+
+
 @extractor("cilium")
 def cilium():
     repo = "cilium/cilium"
@@ -724,6 +759,46 @@ def metrics_server():
             "stated": {"min": span.group(1), "max": span.group(2) or "latest", "wording": header[2]},
             "source": f"https://github.com/{repo}#compatibility-matrix",
             "source_commit": file_commit(repo, sha, path),
+        })
+    return releases
+
+
+@extractor("kube-prometheus")
+def kube_prometheus():
+    """The README's compatibility grid, per release branch. A tick is recorded as stated;
+    an x is not recorded, because upstream does not say those versions do not work."""
+    repo, path = "prometheus-operator/kube-prometheus", "README.md"
+    sha = commit_sha(repo)
+    text = read(repo, sha, path)
+    section = re.search(r"(?ms)^## Compatibility\n(.*?)(?=^## )", text)
+    need(section, "compatibility section not found")
+    need("The following Kubernetes versions are supported and work as we test against these versions in their "
+         "respective branches." in section.group(1), "the sentence introducing the grid changed")
+    rows = table_rows(section.group(1))
+    need(rows and rows[0][0] == "kube-prometheus stack", "table header changed")
+    columns = []
+    for cell in rows[0][1:]:
+        minor = re.fullmatch(r"Kubernetes (1\.\d+)", cell)
+        need(minor, f"unexpected column '{cell}'")
+        columns.append(minor.group(1))
+    commit = file_commit(repo, sha, path)
+    releases = []
+    for row in rows[2:]:
+        branch = plain(row[0])
+        if branch == "main":
+            continue  # development branch, no release
+        version = re.fullmatch(r"release-(\d+\.\d+)", branch)
+        need(version and len(row) == len(columns) + 1 and all(c in ("✔", "x") for c in row[1:]),
+             f"unexpected row {row[:2]}")
+        supported = [m for m, c in zip(columns, row[1:]) if c == "✔"]
+        if not supported:
+            continue
+        need(contiguous(supported), f"supported versions for {branch} are not one range")
+        releases.append({
+            "version": version.group(1),
+            "stated": {"min": supported[0], "max": supported[-1], "wording": "Compatibility"},
+            "source": f"https://github.com/{repo}#compatibility",
+            "source_commit": commit,
         })
     return releases
 
