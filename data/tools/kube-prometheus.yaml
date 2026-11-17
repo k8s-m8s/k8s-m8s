@@ -1,0 +1,38 @@
+name: kube-prometheus
+title: kube-prometheus
+category: observability-policy-scaling
+repo: https://github.com/prometheus-operator/kube-prometheus
+upstream_license: Apache-2.0
+notes: >-
+  The README's compatibility grid marks, for each release branch, the
+  Kubernetes minors that are "supported and work as we test against these
+  versions in their respective branches". Upstream also notes that CI tests
+  only the last two releases and the main branch regularly, so the ticks are
+  recorded as stated rather than tested. Cells marked x are not recorded,
+  because upstream does not say those versions do not work. The main branch
+  is not a release and is not recorded.
+releases:
+  - version: "0.19"
+    stated:
+      min: "1.35"
+      max: "1.37"
+      wording: Compatibility
+    source: https://github.com/prometheus-operator/kube-prometheus#compatibility
+    source_commit: 62a918ae2a7bed819f7fb61c4eb60e744e82a612
+    verified: 2026-11-17
+  - version: "0.18"
+    stated:
+      min: "1.33"
+      max: "1.36"
+      wording: Compatibility
+    source: https://github.com/prometheus-operator/kube-prometheus#compatibility
+    source_commit: 62a918ae2a7bed819f7fb61c4eb60e744e82a612
+    verified: 2026-11-17
+  - version: "0.17"
+    stated:
+      min: "1.33"
+      max: "1.35"
+      wording: Compatibility
+    source: https://github.com/prometheus-operator/kube-prometheus#compatibility
+    source_commit: 62a918ae2a7bed819f7fb61c4eb60e744e82a612
+    verified: 2026-11-17

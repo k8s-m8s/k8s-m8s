@@ -33,6 +33,7 @@ nav = [
     { "Istio" = "tools/istio.md" },
     { "Karpenter" = "tools/karpenter.md" },
     { "KEDA" = "tools/keda.md" },
+    { "kube-prometheus" = "tools/kube-prometheus.md" },
     { "KubeVirt" = "tools/kubevirt.md" },
     { "Kyverno" = "tools/kyverno.md" },
     { "Linkerd" = "tools/linkerd.md" },

@@ -763,6 +763,46 @@ def metrics_server():
     return releases
 
 
+@extractor("kube-prometheus")
+def kube_prometheus():
+    """The README's compatibility grid, per release branch. A tick is recorded as stated;
+    an x is not recorded, because upstream does not say those versions do not work."""
+    repo, path = "prometheus-operator/kube-prometheus", "README.md"
+    sha = commit_sha(repo)
+    text = read(repo, sha, path)
+    section = re.search(r"(?ms)^## Compatibility\n(.*?)(?=^## )", text)
+    need(section, "compatibility section not found")
+    need("The following Kubernetes versions are supported and work as we test against these versions in their "
+         "respective branches." in section.group(1), "the sentence introducing the grid changed")
+    rows = table_rows(section.group(1))
+    need(rows and rows[0][0] == "kube-prometheus stack", "table header changed")
+    columns = []
+    for cell in rows[0][1:]:
+        minor = re.fullmatch(r"Kubernetes (1\.\d+)", cell)
+        need(minor, f"unexpected column '{cell}'")
+        columns.append(minor.group(1))
+    commit = file_commit(repo, sha, path)
+    releases = []
+    for row in rows[2:]:
+        branch = plain(row[0])
+        if branch == "main":
+            continue  # development branch, no release
+        version = re.fullmatch(r"release-(\d+\.\d+)", branch)
+        need(version and len(row) == len(columns) + 1 and all(c in ("✔", "x") for c in row[1:]),
+             f"unexpected row {row[:2]}")
+        supported = [m for m, c in zip(columns, row[1:]) if c == "✔"]
+        if not supported:
+            continue
+        need(contiguous(supported), f"supported versions for {branch} are not one range")
+        releases.append({
+            "version": version.group(1),
+            "stated": {"min": supported[0], "max": supported[-1], "wording": "Compatibility"},
+            "source": f"https://github.com/{repo}#compatibility",
+            "source_commit": commit,
+        })
+    return releases
+
+
 @extractor("cluster-autoscaler")
 def cluster_autoscaler():
     repo, path = "kubernetes/autoscaler", "cluster-autoscaler/README.md"
