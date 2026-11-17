@@ -249,6 +249,41 @@ def longhorn():
 
 # --- networking --------------------------------------------------------------
 
+@extractor("cloudnative-pg")
+def cloudnative_pg():
+    """Both release tables' "Supported Kubernetes versions" column. The current table's
+    "Tested, but not supported" column is left out (see the tool's notes)."""
+    repo, path = "cloudnative-pg/cloudnative-pg", "docs/src/supported_releases.md"
+    sha = commit_sha(repo)
+    text = read(repo, sha, path)
+    wording = "Supported Kubernetes versions"
+    commit = file_commit(repo, sha, path)
+    releases, header, tables = [], None, 0
+    for row in table_rows(text):
+        if row[0] == "Version":
+            header = row if wording in row else None
+            tables += header is not None
+            continue
+        if not header or set(row[0]) <= set("-"):
+            continue
+        need(len(row) == len(header), f"unexpected row {row[:2]}")
+        if row[0] == "main":
+            continue  # development branch, no release
+        version = re.fullmatch(r"(\d+\.\d+)\.x", row[0])
+        minors_listed = [m.strip() for m in row[header.index(wording)].split(",")]
+        need(version and all(re.fullmatch(r"1\.\d+", m) for m in minors_listed), f"unexpected row {row[:2]}")
+        supported = sorted(minors_listed, key=version_key)
+        need(contiguous(supported), f"supported versions for {row[0]} are not one range")
+        releases.append({
+            "version": version.group(1),
+            "stated": {"min": supported[0], "max": supported[-1], "wording": wording},
+            "source": f"https://github.com/{repo}/blob/main/{path}",
+            "source_commit": commit,
+        })
+    need(tables == 2, f"expected two tables with a '{wording}' column, found {tables}")
+    return releases
+
+
 @extractor("cilium")
 def cilium():
     repo = "cilium/cilium"
