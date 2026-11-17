@@ -1,0 +1,368 @@
+name: helm
+title: Helm
+category: gitops-delivery
+repo: https://github.com/helm/helm
+# The statement lives in the project's website repository (the source of
+# helm.sh, which the main repo's README links to).
+official_sources:
+  - https://github.com/helm/helm-www
+upstream_license: Apache-2.0
+notes: >-
+  The version support policy page gives, for each Helm minor release, a range
+  of supported Kubernetes minors. Helm 4 is listed on the current page and Helm
+  3 and 2 on the version 3 page; both are in the website repository. Upstream
+  states no testing claim. The page also describes a general rule for how far
+  Helm's support reaches; only the table rows are recorded.
+releases:
+  - version: "4.3"
+    stated:
+      min: "1.34"
+      max: "1.37"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/docs/topics/version_skew.mdx
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "4.2"
+    stated:
+      min: "1.33"
+      max: "1.36"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/docs/topics/version_skew.mdx
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "4.1"
+    stated:
+      min: "1.32"
+      max: "1.35"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/docs/topics/version_skew.mdx
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "4.0"
+    stated:
+      min: "1.31"
+      max: "1.34"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/docs/topics/version_skew.mdx
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "3.22"
+    stated:
+      min: "1.34"
+      max: "1.37"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "3.21"
+    stated:
+      min: "1.33"
+      max: "1.36"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "3.20"
+    stated:
+      min: "1.32"
+      max: "1.35"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "3.19"
+    stated:
+      min: "1.31"
+      max: "1.34"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "3.18"
+    stated:
+      min: "1.30"
+      max: "1.33"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "3.17"
+    stated:
+      min: "1.29"
+      max: "1.32"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "3.16"
+    stated:
+      min: "1.28"
+      max: "1.31"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "3.15"
+    stated:
+      min: "1.27"
+      max: "1.30"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "3.14"
+    stated:
+      min: "1.26"
+      max: "1.29"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "3.13"
+    stated:
+      min: "1.25"
+      max: "1.28"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "3.12"
+    stated:
+      min: "1.24"
+      max: "1.27"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "3.11"
+    stated:
+      min: "1.23"
+      max: "1.26"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "3.10"
+    stated:
+      min: "1.22"
+      max: "1.25"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "3.9"
+    stated:
+      min: "1.21"
+      max: "1.24"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "3.8"
+    stated:
+      min: "1.20"
+      max: "1.23"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "3.7"
+    stated:
+      min: "1.19"
+      max: "1.22"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "3.6"
+    stated:
+      min: "1.18"
+      max: "1.21"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "3.5"
+    stated:
+      min: "1.17"
+      max: "1.20"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "3.4"
+    stated:
+      min: "1.16"
+      max: "1.19"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "3.3"
+    stated:
+      min: "1.15"
+      max: "1.18"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "3.2"
+    stated:
+      min: "1.15"
+      max: "1.18"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "3.1"
+    stated:
+      min: "1.14"
+      max: "1.17"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "3.0"
+    stated:
+      min: "1.13"
+      max: "1.16"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "2.16"
+    stated:
+      min: "1.15"
+      max: "1.16"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "2.15"
+    stated:
+      min: "1.14"
+      max: "1.15"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "2.14"
+    stated:
+      min: "1.13"
+      max: "1.14"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "2.13"
+    stated:
+      min: "1.12"
+      max: "1.13"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "2.12"
+    stated:
+      min: "1.11"
+      max: "1.12"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "2.11"
+    stated:
+      min: "1.10"
+      max: "1.11"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "2.10"
+    stated:
+      min: "1.9"
+      max: "1.10"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "2.9"
+    stated:
+      min: "1.9"
+      max: "1.10"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "2.8"
+    stated:
+      min: "1.8"
+      max: "1.9"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "2.7"
+    stated:
+      min: "1.7"
+      max: "1.8"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "2.6"
+    stated:
+      min: "1.6"
+      max: "1.7"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "2.5"
+    stated:
+      min: "1.5"
+      max: "1.6"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "2.4"
+    stated:
+      min: "1.5"
+      max: "1.6"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "2.3"
+    stated:
+      min: "1.4"
+      max: "1.5"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "2.2"
+    stated:
+      min: "1.4"
+      max: "1.5"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "2.1"
+    stated:
+      min: "1.4"
+      max: "1.5"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
+  - version: "2.0"
+    stated:
+      min: "1.3"
+      max: "1.4"
+      wording: Supported Kubernetes Versions
+    source: https://github.com/helm/helm-www/blob/main/versioned_docs/version-3/topics/version_skew.md
+    source_commit: d1219bdd629216a33c8112704440352714fa40f1
+    verified: 2026-11-17
