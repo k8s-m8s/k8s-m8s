@@ -439,6 +439,33 @@ def calico():
 
 # --- GitOps and delivery -----------------------------------------------------
 
+@extractor("helm")
+def helm():
+    """Helm 4 rows from the current docs, Helm 3 and 2 rows from the version-3 docs."""
+    repo = "helm/helm-www"
+    sha = commit_sha(repo)
+    releases = []
+    for path in ("docs/topics/version_skew.mdx", "versioned_docs/version-3/topics/version_skew.md"):
+        rows = table_rows(read(repo, sha, path))
+        need(rows and rows[0] == ["Helm Version", "Supported Kubernetes Versions"], f"table header changed in {path}")
+        commit = file_commit(repo, sha, path)
+        for row in rows[2:]:
+            version = re.fullmatch(r"(\d+\.\d+)\.x", row[0])
+            supported = re.fullmatch(r"(1\.\d+)\.x - (1\.\d+)\.x", row[1]) if len(row) == 2 else None
+            need(version and supported, f"unexpected row {row} in {path}")
+            high, low = supported.groups()
+            need(version_key(low) <= version_key(high), f"range for {version.group(1)} runs backwards")
+            releases.append({
+                "version": version.group(1),
+                "stated": {"min": low, "max": high, "wording": rows[0][1]},
+                "source": f"https://github.com/{repo}/blob/main/{path}",
+                "source_commit": commit,
+            })
+    versions = [r["version"] for r in releases]
+    need(len(versions) == len(set(versions)), "a Helm version is listed twice")
+    return releases
+
+
 @extractor("argo-cd")
 def argo_cd():
     repo, path = "argoproj/argo-cd", "docs/operator-manual/tested-kubernetes-versions.md"
