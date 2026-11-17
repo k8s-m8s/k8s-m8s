@@ -3,20 +3,36 @@
 
 Usage:
     python scripts/verify.py                # report differences for all tools
-    python scripts/verify.py velero rook    # only these tools
+    python scripts/verify.py velero rook    # only these tools (or --tools velero,rook)
     python scripts/verify.py --write        # also refresh verified/source_commit
                                             # on entries that still match upstream
     python scripts/verify.py --apply        # also write upstream's new, changed and
                                             # removed rows into the data files
+    python scripts/verify.py --claims-only  # write only the entries whose claims changed,
+                                            # and the Kubernetes window if it changed
+    python scripts/verify.py --detect-only --report-json report.json
+                                            # change nothing, write a machine-readable report
 
-Without --apply, differences are only reported. With it they are written to
-the data files as a proposal: a human must still read the diff against the
-linked sources before it is merged. Set GITHUB_TOKEN (or GH_TOKEN) to avoid
-GitHub API rate limits.
+Without --apply or --claims-only, differences are only reported. With them they
+are written to the data files as a proposal: every change is still checked
+against the linked sources before it is merged. Set GITHUB_TOKEN (or GH_TOKEN)
+to avoid GitHub API rate limits.
+
+With --report-json the exit status is 0 whatever was found, because the caller
+reads the report; it is non-zero only if the script itself failed.
+
+Each finding in the report has a class:
+    bookkeeping  only source_commit moved; every claim field is identical
+    claim        a claim field changed, or an entry was added, removed or delisted
+    window       the Kubernetes window differs from data/kubernetes.yaml
+    needs-human  the statement could not be read or parsed, or cannot be resolved
+                 automatically (for example a delisted row that upstream lists again)
+Refreshing `verified` alone is not reported as a finding.
 """
 
 import argparse
 import datetime
+import json
 import re
 import sys
 
@@ -24,6 +40,7 @@ from common import KUBERNETES_FILE, load_yaml, release_label, tool_files, versio
 from extractors import EXTRACTORS, UpstreamChanged, kubernetes_window
 
 CLAIM_FIELDS = ("tested", "stated", "unsupported", "source")
+MODES = ("report", "write", "apply", "claims")
 
 
 def claims(release):
@@ -34,6 +51,20 @@ def claims(release):
     return result
 
 
+def snapshot(release):
+    """An entry as a finding shows it: its key, claims, commit and delisted date."""
+    if release is None:
+        return None
+    key = {"version": release["version"]} if "version" in release else {"version_range": release["version_range"]}
+    extra = {k: release[k] for k in ("source_commit", "delisted") if k in release}
+    return {**key, **claims(release), **extra}
+
+
+def changed_fields(old, new):
+    old, new = old or {}, new or {}
+    return [f for f in (*CLAIM_FIELDS, "delisted") if old.get(f) != new.get(f)]
+
+
 def describe(recorded, upstream):
     parts = []
     for field in CLAIM_FIELDS:
@@ -42,95 +73,165 @@ def describe(recorded, upstream):
     return "; ".join(parts)
 
 
-def reconcile(releases, upstream, today, mode):
+def finding(tool, label, cls, message, old=None, new=None, fields=None, reason=None):
+    after = new or old or {}
+    result = {
+        "id": f"{tool}/{label}",
+        "tool": tool,
+        "version": label,
+        "class": cls,
+        "fields": fields if fields is not None else changed_fields(old, new),
+        "source": after.get("source"),
+        "source_commit": after.get("source_commit"),
+        "old": old,
+        "new": new,
+        "message": message,
+    }
+    if reason:
+        result["reason"] = reason
+    return result
+
+
+def reconcile(releases, upstream, today, mode, tool="tool", findings=None):
     """Compare recorded releases with upstream's, updating them in place as mode allows.
 
     mode "report" changes nothing, "write" refreshes verified and source_commit
-    on entries that still match, and "apply" also takes over upstream's changed,
-    new and removed rows. An upstream row that carries `delisted` was read
+    on entries that still match, "apply" also takes over upstream's changed,
+    new and removed rows, and "claims" takes over those rows without touching
+    entries that still match. An upstream row that carries `delisted` was read
     from the source's history: it is compared like any other row, including
     its delisted date. Returns (matching, differences, problems): the number
     of current entries that match, messages for differences (applied in
-    "apply" mode), and messages for things only a human can resolve.
+    "apply" and "claims" mode), and messages for things only a human can
+    resolve. If `findings` is a list, a classified finding is appended to it
+    for every difference, problem and moved source_commit.
     """
+    findings = [] if findings is None else findings
+    applying = mode in ("apply", "claims")
+    refreshing = mode in ("write", "apply")
     by_label = {release_label(r): r for r in upstream}
     matching, differences, problems = 0, [], []
+
+    def differ(label, message, release, found):
+        differences.append(message)
+        before = snapshot(release)
+        if applying:
+            for field in CLAIM_FIELDS:
+                release.pop(field, None)
+            release.update(claims(found), source_commit=found["source_commit"], verified=today)
+            if "delisted" in found:
+                release["delisted"] = found["delisted"]
+        findings.append(finding(tool, label, "claim", message, before, snapshot(found)))
+
+    def bookkeep(label, release, found):
+        if release.get("source_commit") != found["source_commit"]:
+            findings.append(finding(
+                tool, label, "bookkeeping", f"{label}: source_commit moved, claims unchanged",
+                snapshot(release), snapshot({**release, "source_commit": found["source_commit"]}),
+                fields=["source_commit"],
+            ))
+        if refreshing:
+            release.update(source_commit=found["source_commit"], verified=today)
+
     for release in releases:
         label = release_label(release)
         found = by_label.pop(label, None)
         if found and "delisted" in found:
             if claims(release) == claims(found) and release.get("delisted") == found["delisted"]:
-                if mode != "report":
-                    release.update(source_commit=found["source_commit"], verified=today)
+                bookkeep(label, release, found)
                 continue
             if "delisted" in release:
-                differences.append(f"{label}: upstream history differs ({describe(claims(release), claims(found))}; "
-                                   f"delisted: recorded {release['delisted']}, upstream {found['delisted']})")
+                message = (f"{label}: upstream history differs ({describe(claims(release), claims(found))}; "
+                           f"delisted: recorded {release['delisted']}, upstream {found['delisted']})")
             else:
-                differences.append(f"{label}: no longer listed upstream; last values taken from the commit "
-                                   f"that last listed it, delisted {found['delisted']}")
-            if mode == "apply":
-                for field in CLAIM_FIELDS:
-                    release.pop(field, None)
-                release.update(claims(found), source_commit=found["source_commit"],
-                               delisted=found["delisted"], verified=today)
+                message = (f"{label}: no longer listed upstream; last values taken from the commit "
+                           f"that last listed it, delisted {found['delisted']}")
+            differ(label, message, release, found)
         elif "delisted" in release:
             if found:
-                problems.append(f"{label}: marked delisted but upstream lists it again")
+                message = f"{label}: marked delisted but upstream lists it again"
+                problems.append(message)
+                findings.append(finding(tool, label, "needs-human", message, snapshot(release), snapshot(found),
+                                        reason="delisted row listed again"))
         elif not found:
-            if mode == "apply":
+            before = snapshot(release)
+            if applying:
                 release["delisted"] = today
-                differences.append(f"{label}: no longer listed upstream; marked delisted, last values kept")
+                message = f"{label}: no longer listed upstream; marked delisted, last values kept"
             else:
-                differences.append(f"{label}: no longer listed upstream (add 'delisted' and keep the values)")
+                message = f"{label}: no longer listed upstream (add 'delisted' and keep the values)"
+            differences.append(message)
+            findings.append(finding(tool, label, "claim", message, before, {**before, "delisted": today},
+                                    fields=["delisted"]))
         elif claims(release) != claims(found):
-            differences.append(f"{label}: changed upstream ({describe(claims(release), claims(found))})")
-            if mode == "apply":
-                for field in CLAIM_FIELDS:
-                    release.pop(field, None)
-                release.update(claims(found), source_commit=found["source_commit"], verified=today)
+            differ(label, f"{label}: changed upstream ({describe(claims(release), claims(found))})", release, found)
         else:
             matching += 1
-            if mode != "report":
-                release.update(source_commit=found["source_commit"], verified=today)
+            bookkeep(label, release, found)
     for label in sorted(by_label):
-        if "delisted" in by_label[label]:
-            differences.append(f"{label}: in upstream's history (delisted {by_label[label]['delisted']}) but not recorded")
+        found = by_label[label]
+        if "delisted" in found:
+            message = f"{label}: in upstream's history (delisted {found['delisted']}) but not recorded"
         else:
-            differences.append(f"{label}: listed upstream but not recorded")
-        if mode == "apply":
-            found = by_label[label]
+            message = f"{label}: listed upstream but not recorded"
+        differences.append(message)
+        findings.append(finding(tool, label, "claim", message, None, snapshot(found)))
+        if applying:
             releases.append({**found, **claims(found), "verified": today})
     return matching, differences, problems
 
 
-def verify_window(mode, today):
-    recorded = load_yaml(KUBERNETES_FILE)["window"]
-    window, sha = kubernetes_window()
+def verify_window(mode, today, findings=None, fetch=kubernetes_window, path=KUBERNETES_FILE):
+    """Compare the recorded Kubernetes window with upstream's, writing it as mode allows."""
+    data = load_yaml(path)
+    recorded = data["window"]
+    window, sha = fetch()
     differences = [] if recorded == window else [f"window: recorded {recorded}, upstream {window}"]
-    if mode == "apply" or (mode == "write" and not differences):
-        text = KUBERNETES_FILE.read_text(encoding="utf-8")
+    if differences and findings is not None:
+        findings.append({
+            "id": "kubernetes/window", "tool": "kubernetes", "version": "window", "class": "window",
+            "fields": ["window"], "source": data.get("source"), "source_commit": sha,
+            "old": {"window": recorded, "source_commit": data.get("source_commit")},
+            "new": {"window": window, "source_commit": sha}, "message": differences[0],
+        })
+    elif not differences and findings is not None and data.get("source_commit") != sha:
+        findings.append({
+            "id": "kubernetes/window", "tool": "kubernetes", "version": "window", "class": "bookkeeping",
+            "fields": ["source_commit"], "source": data.get("source"), "source_commit": sha,
+            "old": {"window": recorded, "source_commit": data.get("source_commit")},
+            "new": {"window": window, "source_commit": sha}, "message": "window: source_commit moved",
+        })
+    if mode == "apply" or (mode == "claims" and differences) or (mode == "write" and not differences):
+        text = path.read_text(encoding="utf-8")
         listed = ", ".join(f'"{minor}"' for minor in window)
         text = re.sub(r"(?m)^window:.*$", f"window: [{listed}]", text)
         text = re.sub(r"(?m)^source_commit:.*$", f"source_commit: {sha}", text)
         text = re.sub(r"(?m)^verified:.*$", f"verified: {today}", text)
-        KUBERNETES_FILE.write_text(text, encoding="utf-8")
+        path.write_text(text, encoding="utf-8")
     return differences
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("tools", nargs="*", help="tool names to check (default: all, plus the Kubernetes window)")
+    parser.add_argument("--tools", dest="tool_list", default="", help="comma-separated tool names, as an alternative")
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--write", action="store_true", help="refresh verified and source_commit on matching entries")
     group.add_argument("--apply", action="store_true", help="also write upstream's differences into the data files")
+    group.add_argument("--claims-only", action="store_true",
+                       help="write only entries whose claims changed (and the window if it changed)")
+    group.add_argument("--detect-only", action="store_true", help="change nothing (the default); for clarity in workflows")
+    parser.add_argument("--report-json", metavar="PATH", help="write the classified findings to PATH as JSON")
     args = parser.parse_args()
-    mode = "apply" if args.apply else "write" if args.write else "report"
+    mode = "apply" if args.apply else "write" if args.write else "claims" if args.claims_only else "report"
     today = datetime.date.today().isoformat()
+    selected = list(args.tools) + [t for t in args.tool_list.split(",") if t.strip()]
+    selected = [t.strip() for t in selected]
     difference_count = problem_count = 0
+    findings, checked = [], []
 
     known = {path.stem for path in tool_files()}
-    unknown = sorted(set(args.tools) - known)
+    unknown = sorted(set(selected) - known)
     if unknown:
         parser.error(f"no data file for: {', '.join(unknown)}")
 
@@ -140,39 +241,57 @@ def main():
         problem_count += len(problems)
         print(f"{name}: {summary}")
         for message in differences:
-            print(f"  - {'applied: ' if mode == 'apply' else ''}{message}")
+            print(f"  - {'applied: ' if mode in ('apply', 'claims') else ''}{message}")
         for message in problems:
             print(f"  - needs a human: {message}")
 
-    if not args.tools:
+    def broken(name, label, reason, message):
+        findings.append(finding(name, label, "needs-human", message, fields=[], reason=reason))
+        report(name, "error", problems=[message])
+
+    if not selected:
         try:
-            differences = verify_window(mode, today)
+            differences = verify_window(mode, today, findings)
+            checked.append("kubernetes")
             report("kubernetes", "window differs" if differences else "window matches", differences)
-        except Exception as exc:  # network failure or UpstreamChanged
-            report("kubernetes", "error", problems=[f"could not read upstream: {exc}"])
+        except UpstreamChanged as exc:
+            broken("kubernetes", "window", "statement changed shape", f"release schedule changed shape: {exc}")
+        except Exception as exc:  # network failure
+            broken("kubernetes", "window", "could not read upstream", f"could not read upstream: {exc}")
 
     for path in tool_files():
-        if args.tools and path.stem not in args.tools:
+        if selected and path.stem not in selected:
             continue
         data = load_yaml(path)
         if path.stem not in EXTRACTORS:
-            report(path.stem, "not verifiable", problems=["no extractor in scripts/extractors.py"])
+            broken(path.stem, "extractor", "no extractor", "no extractor in scripts/extractors.py")
             continue
         try:
             upstream = EXTRACTORS[path.stem]()
         except UpstreamChanged as exc:
-            report(path.stem, "error", problems=[f"statement changed shape, re-read it by hand: {exc}"])
+            broken(path.stem, "extractor", "statement changed shape",
+                   f"statement changed shape, re-read it by hand: {exc}")
             continue
         except Exception as exc:  # network failure
-            report(path.stem, "error", problems=[f"could not read upstream: {exc}"])
+            broken(path.stem, "extractor", "could not read upstream", f"could not read upstream: {exc}")
             continue
+        checked.append(path.stem)
         listed = sum(1 for release in data["releases"] if "delisted" not in release)
-        matching, differences, problems = reconcile(data["releases"], upstream, today, mode)
+        matching, differences, problems = reconcile(data["releases"], upstream, today, mode, path.stem, findings)
         if mode != "report":
             write_releases(path, data["releases"])
         report(path.stem, f"{matching} of {listed} current entries match upstream", differences, problems)
 
-    if mode == "apply":
+    if args.report_json:
+        with open(args.report_json, "w", encoding="utf-8") as handle:
+            json.dump({"date": today, "mode": mode, "checked": checked, "findings": findings}, handle, indent=2)
+            handle.write("\n")
+        counts = {}
+        for item in findings:
+            counts[item["class"]] = counts.get(item["class"], 0) + 1
+        print(f"\nreport written to {args.report_json}: " + (", ".join(f"{n} {c}" for c, n in sorted(counts.items())) or "no findings"))
+        return 0
+    if mode in ("apply", "claims"):
         print(f"\n{difference_count} difference(s) applied for review, {problem_count} problem(s) need a human")
         return 1 if problem_count else 0
     if difference_count or problem_count:

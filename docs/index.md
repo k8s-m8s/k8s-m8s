@@ -8,6 +8,6 @@ For every tool version, k8s-m8s records what the maintainers actually claimed, l
 - [How to read this](how-to-read.md): what tested, stated, unsupported and unknown mean.
 - Each tool has its own page, listed in the navigation, with every recorded version and a link to the upstream source at the commit it was read from.
 
-The data behind these pages is one YAML file per tool, checked against a published [JSON Schema](schema/tool.schema.json) and re-verified against upstream every week.
+The data behind these pages is one YAML file per tool, checked against a published [JSON Schema](schema/tool.schema.json) and verified daily against each tool's own repository. Routine changes are checked by an automated review against the upstream source at the recorded commit before they're published. Maintainers review Kubernetes version changes, removals and anything flagged.
 
 k8s-m8s is an independent project. It is not affiliated with or endorsed by the Kubernetes project, the Cloud Native Computing Foundation, the Linux Foundation, or any listed tool. Always check the linked upstream source and test before upgrading a cluster or a tool.

@@ -6,6 +6,7 @@ docs/schema/. These files are build output: do not edit them by hand. Also refre
 zensical.toml so every tool page is listed.
 """
 
+import os
 import re
 import shutil
 import sys
@@ -183,6 +184,9 @@ def matrix_page(tools, window):
     )
     oldest = min(r["verified"] for tool in tools for r in tool["releases"])
     parts.append(f"{len(tools)} tools. Every entry was last checked against its upstream source on or after {oldest}.\n")
+    checked = os.environ.get("UPSTREAM_CHECKED", "").strip()
+    if re.fullmatch(r"\d{4}-\d{2}-\d{2}", checked):  # set by pages.yml from the latest successful daily detect.yml run
+        parts.append(f"Upstream last checked: {checked}.\n")
     parts.append(
         "Only tool versions with an upstream statement covering these Kubernetes versions "
         "are listed here. Each tool's page has every recorded version.\n"

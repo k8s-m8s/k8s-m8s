@@ -1,0 +1,107 @@
+name: Detect upstream changes
+
+# Daily: re-read every upstream statement. The detect job has no secrets and
+# a read-only token; it writes the report and any changed data files to an
+# artifact. The publish job runs only if something needs publishing (or an
+# open pull request or issue may need closing). It commits nothing from a
+# pull request and mints the automation App's token in the step that uses it.
+# See docs/maintainers/automation.md.
+
+on:
+  schedule:
+    - cron: "43 5 * * *"
+  workflow_dispatch:
+    inputs:
+      fixture:
+        description: "Test only: instead of reading upstream, open a claim PR for this tool with a deliberate mistake"
+        type: string
+        default: ""
+
+permissions: {}
+
+concurrency:
+  group: detect
+  cancel-in-progress: false
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: read
+      pull-requests: read
+    outputs:
+      publish: ${{ steps.pending.outputs.publish }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+      - run: pip install --require-hashes -r requirements.lock
+
+      - name: Compare with upstream and write claim changes
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          FIXTURE: ${{ inputs.fixture }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/out"
+          if [ -n "$FIXTURE" ]; then
+            python scripts/test_fixture.py --tool "$FIXTURE" --report-json "$RUNNER_TEMP/out/report.json"
+          else
+            python scripts/verify.py --claims-only --report-json "$RUNNER_TEMP/out/report.json"
+          fi
+          cp -R data "$RUNNER_TEMP/out/data"
+          echo "$GITHUB_SHA" > "$RUNNER_TEMP/out/base"
+
+      - name: Check whether anything needs publishing
+        id: pending
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: echo "publish=$(python scripts/publish_findings.py pending --report "$RUNNER_TEMP/out/report.json")" >> "$GITHUB_OUTPUT"
+
+      - if: steps.pending.outputs.publish == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: findings
+          path: ${{ runner.temp }}/out
+          retention-days: 7
+
+  publish:
+    needs: detect
+    if: needs.detect.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    environment: automation
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+      - run: pip install --require-hashes -r requirements.lock
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: findings
+          path: ${{ runner.temp }}/out
+
+      - id: app
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          app-id: ${{ vars.AUTOMATION_APP_ID }}
+          private-key: ${{ secrets.AUTOMATION_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+          permission-issues: write
+      - name: Open or update pull requests and issues
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          AUTOMATION_LOGIN: ${{ vars.AUTOMATION_LOGIN }}
+        run: >-
+          python scripts/publish_findings.py detect
+          --report "$RUNNER_TEMP/out/report.json"
+          --data-dir "$RUNNER_TEMP/out"
+          --base "$(cat "$RUNNER_TEMP/out/base")"

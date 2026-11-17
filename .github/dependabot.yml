@@ -1,19 +1,26 @@
 # Keeps the commit-pinned actions in .github/workflows and the Python
-# requirements up to date.
+# requirements up to date, once a month. Dependency pull requests never merge
+# automatically: automerge.yml only considers automated/* branches.
+# Review updates to anthropics/claude-code-action, actions/create-github-app-token
+# and zensical by hand, line by line (see docs/maintainers/automation.md).
 version: 2
 updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: weekly
+      interval: monthly
     groups:
       actions:
         patterns: ["*"]
 
-  # requirements.txt and requirements-site.txt. A pull request is opened only
-  # when a new release falls outside the allowed range (for example Zensical 0.2).
+  # requirements.txt, requirements-site.txt and requirements.lock (the
+  # hash-pinned file the workflows that hold secrets install from). Zensical is
+  # held below 0.2 by requirements-site.txt.
   - package-ecosystem: pip
     directory: /
     schedule:
-      interval: weekly
+      interval: monthly
     versioning-strategy: increase-if-necessary
+    groups:
+      python:
+        patterns: ["*"]

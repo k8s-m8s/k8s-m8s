@@ -1,17 +1,20 @@
 name: Deploy site
 
-# Builds the site with Zensical and publishes it to GitHub Pages.
+# Builds the site with Zensical and publishes it to GitHub Pages. Also runs
+# after each successful daily detect.yml run, so the matrix page shows when
+# upstream was last checked without a daily commit.
 # Skipped while the repository is private.
 
 on:
   push:
     branches: [main]
+  workflow_run:
+    workflows: ["Detect upstream changes"]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
+permissions: {}
 
 concurrency:
   group: pages
@@ -19,18 +22,32 @@ concurrency:
 
 jobs:
   deploy:
-    if: ${{ !github.event.repository.private }}
+    if: ${{ !github.event.repository.private && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success') }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.13"
       - run: pip install -r requirements.txt -r requirements-site.txt
       - run: python scripts/validate.py --strict
+      - name: Find when upstream was last checked
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          checked=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/detect.yml/runs?branch=main&status=success&per_page=1" \
+            --jq '.workflow_runs[0].updated_at // empty' 2>/dev/null || true)
+          echo "UPSTREAM_CHECKED=${checked%%T*}" >> "$GITHUB_ENV"
       - run: python scripts/generate.py
       - run: zensical build
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0

@@ -1,0 +1,74 @@
+name: Merge automated pull requests
+
+# Merges automated pull requests that pass every gate in
+# docs/maintainers/automation.md: bookkeeping after a mechanical diff check,
+# claim changes after a confirmed review for the current head. Window pull
+# requests and anything labelled human-merge are never merged. Gates run with
+# the read-only workflow token from main's checkout, reading the pull request
+# with git; the automation App's token is minted only for the final step.
+# Set the AUTOMERGE_ENABLED variable to anything but "true" to stop all merges.
+
+on:
+  issue_comment:
+    types: [created]
+  workflow_run:
+    workflows: ["Validate data", "Review claim changes"]
+    types: [completed]
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: automerge
+  cancel-in-progress: false
+
+jobs:
+  automerge:
+    if: >-
+      vars.AUTOMERGE_ENABLED == 'true' &&
+      (github.event_name != 'issue_comment' ||
+       (github.event.issue.pull_request && github.event.comment.user.login == vars.REVIEWER_LOGIN))
+    runs-on: ubuntu-latest
+    environment: automation
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+      - run: pip install --require-hashes -r requirements.lock
+
+      - name: Check the gates
+        id: decide
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AUTOMERGE_ENABLED: ${{ vars.AUTOMERGE_ENABLED }}
+          AUTOMERGE_DRY_RUN: ${{ vars.AUTOMERGE_DRY_RUN }}
+          AUTOMATION_LOGIN: ${{ vars.AUTOMATION_LOGIN }}
+          REVIEWER_LOGIN: ${{ vars.REVIEWER_LOGIN }}
+        run: python scripts/automerge.py decide --out "$RUNNER_TEMP/actions.json"
+
+      - id: app
+        if: steps.decide.outputs.act == 'true'
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          app-id: ${{ vars.AUTOMATION_APP_ID }}
+          private-key: ${{ secrets.AUTOMATION_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+          permission-issues: write
+      - name: Merge, label or comment
+        if: steps.decide.outputs.act == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          AUTOMERGE_ENABLED: ${{ vars.AUTOMERGE_ENABLED }}
+        run: python scripts/automerge.py act --actions "$RUNNER_TEMP/actions.json"

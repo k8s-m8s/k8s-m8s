@@ -27,6 +27,8 @@ Each cell answers one question: what have this tool's maintainers said about run
 
 Only from each tool's own repository, documentation or release notes. Every row on a tool page links to the upstream statement as it stood at the commit it was read from, and shows the date it was last verified. The link is permanent, so it keeps matching the row even after the project edits its page; follow it to GitHub to see the current version. Nothing is inferred from dependency versions, CI configuration or other people's data sets.
 
+The data is checked daily against each tool's own repository. When a project changes its statement, the change is proposed with links to the source. An automated review checks it against the upstream file at the recorded commit before it is published. Maintainers review changes to the Kubernetes versions shown, rows a project has removed, and anything the review flags. The matrix page shows when upstream was last checked.
+
 ## History
 
 Projects often drop older versions from their compatibility tables. When that happens the row is kept on the tool's page under "No longer listed upstream", with the last values that were published.
