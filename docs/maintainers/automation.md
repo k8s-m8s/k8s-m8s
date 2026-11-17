@@ -109,6 +109,62 @@ For the first 4 weeks `AUTOMERGE_DRY_RUN=true` stays set. Claim pull requests ge
 
 **Update the actions.** Dependabot proposes action and pip updates monthly, grouped. They never merge automatically. Review updates to `anthropics/claude-code-action`, `actions/create-github-app-token` and Zensical line by line. For `claude-code-action`, check the release notes for changes to permission modes, `allowed_bots`, `structured_output` and `execution_file`. Then re-run the fixture rehearsal.
 
+## Setup
+
+Do parts A to C before merging the automation workflows. GitHub creates an environment that a workflow refers to on first use, and that environment would have no branch restriction. Part D needs the merged workflows.
+
+### A. Two GitHub Apps
+
+Create both under **org settings → Developer settings → GitHub Apps → New GitHub App**:
+
+| | `k8s-m8s-automation` | `k8s-m8s-reviewer` |
+|---|---|---|
+| Homepage | `https://docs.k8s-m8s.io/` | `https://docs.k8s-m8s.io/` |
+| Webhook | Off | Off |
+| Repository permissions | Contents: Read and write. Pull requests: Read and write. Issues: Read and write. Actions: Read. Checks: Read. Metadata: Read. **Workflows: No access.** | Pull requests: Read and write. Metadata: Read. Nothing else. |
+| Installable by | Only this account | Only this account |
+
+For each App: note its App ID, generate a private key, and install it on `k8s-m8s/k8s-m8s` only. The reviewer App's description can read: "Posts automated verification comments for k8s-m8s. Never merges."
+
+If a name is taken, keep the `k8s-m8s-` prefix and a role word, and change `AUTOMATION_LOGIN` or `REVIEWER_LOGIN` to match.
+
+### B. Environments, variables, rulesets and the team
+
+1. Under **Settings → Environments**, create `automation` and `review` with the secrets and variables in the tables above. Set **Deployment branches and tags** to **Selected branches: `main`**, and leave required reviewers off.
+2. Under **Settings → Secrets and variables → Actions → Variables**, add the four repository variables above.
+3. Under **Settings → Rules → Rulesets**:
+   - **Edit the existing `default` ruleset** (on `main`):
+     - set required approvals to 1, and dismiss stale approvals on new pushes;
+     - keep the required `validate` check, the force-push and deletion blocks, and linear history;
+     - add `k8s-m8s-automation` as the only bypass actor.
+   - **Create a ruleset named `automated`** for `refs/heads/automated/**`:
+     - restrict creations, updates and deletions, and block force pushes;
+     - add `k8s-m8s-automation` as the only bypass actor. The App needs to force-push its own branches when it rewrites a claim pull request.
+
+   No personal account is a bypass actor on either ruleset.
+4. Create an org team `maintainers` with write access to the repository, and add the maintainers. `.github/CODEOWNERS` names `@k8s-m8s/maintainers`.
+
+### C. Claude subscription token
+
+1. On your own machine, signed in to Claude Code with your claude.ai account, run `claude setup-token`.
+2. Add the token as `CLAUDE_CODE_OAUTH_TOKEN` in the `review` environment, not as a repository secret.
+3. Set a reminder about a month before the expiry it shows.
+
+Reviews draw on the subscription's usage. Actions minutes are free for public repositories.
+
+### D. Rehearse
+
+1. Run **Detect upstream changes** (`detect.yml`) manually with `fixture` set to `velero`. The automation App opens a `[test fixture]` claim pull request that adds `tested` 1.37.99, which upstream does not state.
+2. Check:
+   - the review comment comes from `k8s-m8s-reviewer[bot]` and marks the finding `mismatch`;
+   - `automerge.yml` comments "Would not merge" and adds `human-merge`;
+   - the **Review with Claude** step's log shows no Bash, WebFetch or GitHub write calls. `post_review.py` would also have rejected the review if the session log showed any.
+3. Close the pull request. The next `detect.yml` run deletes the branch.
+
+### Your account is the remaining weak point
+
+No automation uses a personal GitHub identity, but an org owner can change every rule. Use a passkey or hardware security key, keep recovery codes offline, and consider a second trusted org owner.
+
 ## Design notes
 
 Why some parts work the way they do:
