@@ -7,6 +7,11 @@ GitHub API at a specific commit, never from rendered pages. The commit
 recorded for an entry is the one that last changed its source file, so it
 only moves when upstream edits the statement.
 
+When upstream only ever names its current release, an extractor may also read
+the source's git history and return the rows upstream has since removed. Each
+such row carries its last known values, a permalink to the last commit that
+listed it, and `delisted`: the date of the commit that removed it.
+
 An extractor raises UpstreamChanged when the statement no longer looks the way
 it did when the parser was written. That is a prompt for a human to re-read
 the source, not something to work around.
@@ -527,21 +532,47 @@ def keda():
     return releases
 
 
+KYVERNO_WORDING = "Kubernetes Versions Supported"
+
+
+def kyverno_statement(text):
+    """(version, min, max) from one revision of the releases page, or None if it has no statement."""
+    version = re.search(r"\*\*(?:Supported|Latest) Release:\*\*\s*\|\s*v(\d+\.\d+)", text)
+    span = re.search(rf"\*\*{KYVERNO_WORDING}:\*\*\s*\|\s*v(1\.\d+) - v(1\.\d+)", text)
+    if not version and not span:
+        return None
+    need(version and span, "supported release table changed")
+    return version.group(1), span.group(1), span.group(2)
+
+
 @extractor("kyverno")
 def kyverno():
+    # The page names only the one supported release, so earlier releases are
+    # read from its git history: each from the last commit that named it, and
+    # delisted on the date of the commit that replaced it.
     repo, path = "kyverno/website", "src/content/docs/docs/installation/releases.md"
     sha = commit_sha(repo)
-    text = read(repo, sha, path)
-    wording = "Kubernetes Versions Supported"
-    version = re.search(r"\*\*Supported Release:\*\*\s*\|\s*v(\d+\.\d+)", text)
-    span = re.search(rf"\*\*{wording}:\*\*\s*\|\s*v(1\.\d+) - v(1\.\d+)", text)
-    need(version and span, "supported release table changed")
-    return [{
-        "version": version.group(1),
-        "stated": {"min": span.group(1), "max": span.group(2), "wording": wording},
-        "source": f"https://github.com/{repo}/blob/main/{path}",
-        "source_commit": file_commit(repo, sha, path),
-    }]
+    history = paged(f"repos/{repo}/commits?path={urllib.parse.quote(path)}&sha={sha}")  # newest first
+    need(history, f"no commit history for {path} in {repo}")
+    releases, seen, newer = [], set(), None
+    for commit in history:
+        statement = kyverno_statement(read(repo, commit["sha"], path))
+        if newer is None:
+            need(statement, "supported release table not found")
+        if statement and statement[0] not in seen:
+            version, low, high = statement
+            seen.add(version)
+            entry = {
+                "version": version,
+                "stated": {"min": low, "max": high, "wording": KYVERNO_WORDING},
+                "source": f"https://github.com/{repo}/blob/{'main' if newer is None else commit['sha']}/{path}",
+                "source_commit": commit["sha"],
+            }
+            if newer is not None:
+                entry["delisted"] = newer["commit"]["committer"]["date"][:10]
+            releases.append(entry)
+        newer = commit
+    return releases
 
 
 @extractor("metrics-server")

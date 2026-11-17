@@ -16,6 +16,7 @@ from common import (  # noqa: E402
     release_label,
     tool_files,
 )
+from extractors import UpstreamChanged, kyverno_statement  # noqa: E402
 from validate import bands_overlap, date_problem, is_under  # noqa: E402
 from verify import reconcile  # noqa: E402
 
@@ -170,6 +171,45 @@ class ReconcileTest(unittest.TestCase):
         self.assertEqual(differences, [])
         self.assertEqual(len(problems), 1)
         self.assertEqual(releases[0]["delisted"], "2026-11-10")
+
+    def history_row(self):
+        return {"version": "1.0", "tested": ["1.35"], "source": "https://e.org/a/ccccccc",
+                "source_commit": "ccccccc", "delisted": "2026-11-20"}
+
+    def test_apply_takes_over_a_row_upstream_history_delists(self):
+        releases = self.recorded()[2:]
+        _, differences, problems = reconcile(releases, [self.history_row()], self.TODAY, "apply")
+        self.assertEqual((len(differences), problems), (1, []))
+        self.assertEqual(releases[0]["delisted"], "2026-11-20")  # upstream's date, not today
+        self.assertEqual(releases[0]["source"], "https://e.org/a/ccccccc")
+        self.assertEqual(releases[0]["source_commit"], "ccccccc")
+
+    def test_a_matching_history_row_is_not_a_difference(self):
+        releases = [{**self.history_row(), "verified": "2026-11-21"}]
+        matching, differences, problems = reconcile(releases, [self.history_row()], self.TODAY, "write")
+        self.assertEqual((matching, differences, problems), (0, [], []))  # not a current entry
+        self.assertEqual(releases[0]["verified"], self.TODAY)
+
+    def test_a_history_row_with_another_delisted_date_differs(self):
+        releases = [{**self.history_row(), "delisted": "2026-11-25", "verified": "2026-11-26"}]
+        _, differences, _ = reconcile(releases, [self.history_row()], self.TODAY, "report")
+        self.assertEqual(len(differences), 1)
+        self.assertEqual(releases[0]["delisted"], "2026-11-25")
+
+
+class KyvernoStatementTest(unittest.TestCase):
+    def test_current_and_earlier_labels(self):
+        current = "| **Supported Release:** | v1.20 (released: Nov 2026) |\n" \
+                  "| **Kubernetes Versions Supported:** | v1.34 - v1.37 |"
+        earlier = "| **Latest Release:** | v1.17 (released: Feb 2, 2026) |\n" \
+                  "| **Kubernetes Versions Supported:** | v1.32 - v1.35 |"
+        self.assertEqual(kyverno_statement(current), ("1.20", "1.34", "1.37"))
+        self.assertEqual(kyverno_statement(earlier), ("1.17", "1.32", "1.35"))
+
+    def test_no_statement_and_half_a_statement(self):
+        self.assertIsNone(kyverno_statement("## Release Notes and Assets"))
+        with self.assertRaises(UpstreamChanged):
+            kyverno_statement("| **Supported Release:** | v1.20 |")
 
 
 if __name__ == "__main__":
