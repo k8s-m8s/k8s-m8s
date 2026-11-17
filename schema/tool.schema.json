@@ -23,7 +23,8 @@
         "gitops-delivery",
         "security",
         "observability-policy-scaling",
-        "workloads-runtimes"
+        "workloads-runtimes",
+        "cluster-lifecycle"
       ]
     },
     "repo": {
