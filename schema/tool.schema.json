@@ -22,7 +22,8 @@
         "networking",
         "gitops-delivery",
         "security",
-        "observability-policy-scaling"
+        "observability-policy-scaling",
+        "workloads-runtimes"
       ]
     },
     "repo": {

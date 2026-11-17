@@ -45,6 +45,7 @@ CATEGORY_TITLES = {
     "gitops-delivery": "GitOps and delivery",
     "security": "Security and secrets",
     "observability-policy-scaling": "Observability, policy and scaling",
+    "workloads-runtimes": "Workloads and runtimes",
 }
 
 
