@@ -1,3 +1,7 @@
+---
+description: "How k8s-m8s checks its data against upstream daily: the workflows, the automated review and the merge gates."
+---
+
 # Automation
 
 How k8s-m8s keeps its data in step with upstream without routine maintainer work, and the rules that keep that safe. Every claim change is still checked against its upstream source before it is published. A script proposes the change, Claude checks it in CI with no GitHub write access, and deterministic scripts post the verdict and merge. Maintainers handle only the riskier changes.

@@ -6,4 +6,5 @@
 /scripts/           @k8s-m8s/maintainers
 /.github/           @k8s-m8s/maintainers
 /docs/maintainers/  @k8s-m8s/maintainers
+/overrides/         @k8s-m8s/maintainers
 /requirements*      @k8s-m8s/maintainers
