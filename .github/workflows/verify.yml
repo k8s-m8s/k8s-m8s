@@ -1,104 +1,92 @@
-name: Verify against upstream
+name: Weekly bookkeeping
 
-# Every week: re-read every upstream statement, write any differences into the
-# data files, and open a pull request for a human to review. Nothing reaches
-# main without that review.
+# Every Monday: refresh `verified` (and `source_commit` where upstream edited a
+# file without changing the claim) on every entry that still matches upstream,
+# and open one pull request with only those changes. Claim changes and
+# problems are left to detect.yml. automerge.yml merges the pull request after
+# check_diff.py's bookkeeping check passes. See docs/maintainers/automation.md.
 
 on:
   schedule:
     - cron: "17 6 * * 1"
   workflow_dispatch:
 
-permissions:
-  contents: write        # push the proposal branch
-  pull-requests: write   # open or update the pull request
-  actions: write         # start the validate workflow on the proposal branch
+permissions: {}
 
 concurrency:
   group: verify
   cancel-in-progress: false
 
-env:
-  BRANCH: automated/verify
-
 jobs:
   verify:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      changed: ${{ steps.verify.outputs.changed }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.13"
-      - run: pip install -r requirements.txt
+      - run: pip install --require-hashes -r requirements.lock
 
-      - name: Compare with upstream and apply differences
+      - name: Refresh entries that still match upstream
         id: verify
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          set +e
-          python scripts/verify.py --apply > "$RUNNER_TEMP/report.txt" 2>&1
-          echo "status=$?" >> "$GITHUB_OUTPUT"
-          cat "$RUNNER_TEMP/report.txt"
+          mkdir -p "$RUNNER_TEMP/out"
+          python scripts/verify.py --write --report-json "$RUNNER_TEMP/out/report.json"
+          python scripts/validate.py --strict
+          python scripts/check_diff.py bookkeeping HEAD WORKTREE || true
+          cp -R data "$RUNNER_TEMP/out/data"
+          echo "$GITHUB_SHA" > "$RUNNER_TEMP/out/base"
+          if git diff --quiet -- data; then echo "changed=false" >> "$GITHUB_OUTPUT"; else echo "changed=true" >> "$GITHUB_OUTPUT"; fi
 
-      - name: Check the result
-        id: check
-        run: |
-          set +e
-          { python scripts/validate.py --strict && python -m unittest discover tests; } > "$RUNNER_TEMP/check.txt" 2>&1
-          echo "status=$?" >> "$GITHUB_OUTPUT"
-          cat "$RUNNER_TEMP/check.txt"
+      - if: steps.verify.outputs.changed == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: bookkeeping
+          path: ${{ runner.temp }}/out
+          retention-days: 7
 
-      - name: Open or update the pull request
+  publish:
+    needs: verify
+    if: needs.verify.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    environment: automation
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+      - run: pip install --require-hashes -r requirements.lock
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: bookkeeping
+          path: ${{ runner.temp }}/out
+
+      - id: app
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          app-id: ${{ vars.AUTOMATION_APP_ID }}
+          private-key: ${{ secrets.AUTOMATION_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+          permission-issues: write
+      - name: Open or update the bookkeeping pull request
         env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          if git diff --quiet -- data; then
-            echo "Data files are unchanged; no pull request needed."
-            exit 0
-          fi
-          if grep -q '^  - ' "$RUNNER_TEMP/report.txt"; then
-            title="Weekly verification: upstream changes to review"
-          else
-            title="Weekly verification: dates refreshed, no upstream changes"
-          fi
-          {
-            echo "Opened by the weekly verification workflow. It re-read every upstream statement and wrote the result into \`data/\`."
-            echo
-            echo "**Before merging:** for each line marked \`applied\` below, open the tool's source link and confirm the change matches what upstream states. Lines marked \`needs a human\` were not changed and need a manual fix. Lines without either are date refreshes only."
-            echo
-            echo "## Verification report"
-            echo
-            echo '```'
-            cat "$RUNNER_TEMP/report.txt"
-            echo '```'
-            echo
-            echo "## Validation and tests"
-            echo
-            echo '```'
-            cat "$RUNNER_TEMP/check.txt"
-            echo '```'
-          } > "$RUNNER_TEMP/body.md"
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git checkout -B "$BRANCH"
-          git add data
-          git commit -m "Weekly verification against upstream"
-          git push --force origin "$BRANCH"
-
-          if [ "$(gh pr list --head "$BRANCH" --state open --json number --jq length)" = "0" ]; then
-            gh pr create --base "${{ github.event.repository.default_branch }}" --head "$BRANCH" --title "$title" --body-file "$RUNNER_TEMP/body.md"
-          else
-            gh pr edit "$BRANCH" --title "$title" --body-file "$RUNNER_TEMP/body.md"
-          fi
-
-          # A pull request opened with the workflow token does not start other
-          # workflows, so start the checks for it explicitly.
-          gh workflow run validate.yml --ref "$BRANCH"
-
-      - name: Fail if anything needs a human
-        if: steps.verify.outputs.status != '0' || steps.check.outputs.status != '0'
-        run: |
-          echo "The verification or the checks reported problems; see the steps above."
-          exit 1
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          AUTOMATION_LOGIN: ${{ vars.AUTOMATION_LOGIN }}
+        run: >-
+          python scripts/publish_findings.py bookkeeping
+          --report "$RUNNER_TEMP/out/report.json"
+          --data-dir "$RUNNER_TEMP/out"
+          --base "$(cat "$RUNNER_TEMP/out/base")"

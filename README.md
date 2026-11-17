@@ -47,7 +47,7 @@ zensical serve
 
 ## How the data stays current
 
-A weekly workflow runs `verify.py --apply`, which writes any new, changed or removed upstream rows into the data files and refreshes the verification dates. It then opens a pull request with a report of what changed. Nothing is merged automatically: a maintainer checks each change against the linked upstream source first.
+Every day a workflow re-reads each tool's upstream statement. When a claim changes, it opens a pull request for that tool, listing old and new values with links to the source at the commit it was read from. An automated review checks each change against that upstream file before it can merge. Maintainers review Kubernetes window changes, removed rows and anything the review or the checks flag. A weekly workflow refreshes the verification dates. [docs/maintainers/automation.md](docs/maintainers/automation.md) has the details.
 
 ## Corrections
 

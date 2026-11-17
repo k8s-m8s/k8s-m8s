@@ -20,6 +20,7 @@ the source, not something to work around.
 import json
 import os
 import re
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -54,10 +55,24 @@ def api(path, accept="application/vnd.github+json"):
         token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
         if token:
             request.add_header("Authorization", f"Bearer {token}")
-        with urllib.request.urlopen(request, timeout=60) as response:
-            body = response.read().decode("utf-8")
+        body = _fetch(request)
         _cache[key] = json.loads(body) if accept.endswith("+json") else body
     return _cache[key]
+
+
+def _fetch(request):
+    """Read a response body, retrying once on a network error or a server error."""
+    for attempt in (1, 2):
+        try:
+            with urllib.request.urlopen(request, timeout=60) as response:
+                return response.read().decode("utf-8")
+        except urllib.error.HTTPError as err:
+            if err.code < 500 or attempt == 2:
+                raise
+        except urllib.error.URLError:
+            if attempt == 2:
+                raise
+        time.sleep(5)
 
 
 def paged(path):
@@ -669,7 +684,13 @@ def kubernetes_window():
     """(latest three Kubernetes minors, commit) from the release schedule data."""
     repo = "kubernetes/website"
     sha = commit_sha(repo)
-    schedule = yaml.safe_load(read(repo, sha, "data/releases/schedule.yaml"))
+    window = window_from_schedule(read(repo, sha, "data/releases/schedule.yaml"))
+    return window, file_commit(repo, sha, "data/releases/schedule.yaml")
+
+
+def window_from_schedule(text):
+    """The latest three released minors listed in the release schedule data."""
+    schedule = yaml.safe_load(text)
     released = sorted((str(s["release"]) for s in schedule["schedules"]), key=version_key, reverse=True)
     need(len(released) >= 3, "release schedule lists fewer than three minors")
-    return released[:3], file_commit(repo, sha, "data/releases/schedule.yaml")
+    return released[:3]

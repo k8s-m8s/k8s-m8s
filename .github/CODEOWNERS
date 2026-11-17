@@ -1,0 +1,9 @@
+# Changes to the data, its schema, the scripts that read and write it, the
+# workflows and the maintainer docs (including the reviewer instructions) are
+# owned by the maintainers team. The team needs write access to the repository.
+/data/              @k8s-m8s/maintainers
+/schema/            @k8s-m8s/maintainers
+/scripts/           @k8s-m8s/maintainers
+/.github/           @k8s-m8s/maintainers
+/docs/maintainers/  @k8s-m8s/maintainers
+/requirements*      @k8s-m8s/maintainers

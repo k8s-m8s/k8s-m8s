@@ -52,9 +52,16 @@ Contributions based on inference, personal testing or third-party compilations c
 6. Run the commands above and check the generated page reads correctly. `generate.py` also updates the navigation in `zensical.toml`; commit that change with the tool.
 7. One tool per pull request.
 
-A weekly workflow re-reads every upstream statement with `verify.py --apply` and opens a pull request with any differences. Those pull requests follow the same rule as any other: each change is checked against the linked upstream source before it is merged.
+A daily workflow re-reads every upstream statement and opens one pull request per tool whose claims changed. The same rule applies to those pull requests as to any other: each change is checked against the linked upstream source before it is merged. An automated review does that check for routine changes, and maintainers do it for the rest. See [docs/maintainers/automation.md](docs/maintainers/automation.md).
 
-When a new Kubernetes minor is released, `data/kubernetes.yaml` is updated first and every tool is re-verified. New columns start as unknown unless an existing `stated` range covers them.
+## Reviewing a Kubernetes window change
+
+When a new Kubernetes minor is released, the daily workflow opens a pull request from `automated/window` that changes only `data/kubernetes.yaml`. It is labelled `human-merge` and never merges automatically. To review it:
+
+1. Open the release schedule data at the linked commit (`data/releases/schedule.yaml` in `kubernetes/website`), and confirm that the new minor is released, not just scheduled, and that the window is the latest three minors, newest first.
+2. Check out the branch and run `python scripts/validate.py --strict`, `python scripts/generate.py` and `python -m unittest discover tests`.
+3. Read the generated matrix. The new column starts as unknown, except where an existing open-ended `stated` range (`max: latest`) covers it. The dropped minor's data stays in the YAML and on each tool's page; nothing is deleted.
+4. Merge, then run `detect.yml` manually. Tools whose upstream statement now names the new minor get their own claim pull requests.
 
 ## Field guide
 
