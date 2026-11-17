@@ -46,7 +46,7 @@ Labels: `claim-change`, `window-change`, `bookkeeping`, `human-merge`, `needs-hu
 |---|---|---|---|
 | `k8s-m8s-automation[bot]` | GitHub App, installed only on this repository, **no Workflows permission** | The publish steps of `detect.yml` and `verify.yml`, and the act step of `automerge.yml` | Push `automated/*` branches, open pull requests and issues, label, comment, close, merge. The only bypass actor on `main` and `automated/**`. |
 | `k8s-m8s-reviewer[bot]` | GitHub App, installed only on this repository | The post step of `review.yml` | Read the repository and comment on pull requests. |
-| Claude | `anthropics/claude-code-action` with the maintainer's subscription token | The review step of `review.yml` | Read files in the job workspace. Returns its verdict as structured output. No GitHub writes. |
+| Claude | `anthropics/claude-code-action`, authenticated with a Claude Code OAuth token | The review step of `review.yml` | Read files in the job workspace. Returns its verdict as structured output. No GitHub writes. |
 | Maintainers | People | Everything else | Everything except bypassing the `main` and `automated` rulesets. |
 
 | Environment | Secrets | Variables | Deployment branches |
@@ -175,7 +175,7 @@ If a name is taken, keep the `k8s-m8s-` prefix and a role word, and change `AUTO
 2. Under **Settings → Secrets and variables → Actions → Variables**, add the four repository variables above.
 3. Under **Settings → Rules → Rulesets**:
    - **Edit the existing `default` ruleset** (on `main`):
-     - dismiss stale approvals on new pushes. Keep required approvals at 0 while there is one maintainer, because GitHub does not let anyone approve their own pull request. Raise it to 1 once a second maintainer has write access;
+     - dismiss stale approvals on new pushes. Set the required approvals to what the maintainers can provide: GitHub does not let anyone approve their own pull request;
      - keep the required `validate` check, the force-push and deletion blocks, and linear history;
      - add `k8s-m8s-automation` as the only bypass actor.
    - **Create a ruleset named `automated`** for `refs/heads/automated/**`:
@@ -186,13 +186,11 @@ If a name is taken, keep the `k8s-m8s-` prefix and a role word, and change `AUTO
 4. Create an org team `maintainers` with **Visible** visibility and write access to the repository, and add the maintainers. `.github/CODEOWNERS` names `@k8s-m8s/maintainers`. GitHub ignores a code owner team that is secret or lacks write access.
 5. Set up [the actions allowlist](#the-actions-allowlist), which allows `anthropics/claude-code-action` and `oven-sh/setup-bun`. Without it, `review.yml` fails at startup.
 
-### C. Claude subscription token
+### C. Claude token
 
-1. On your own machine, signed in to Claude Code with your claude.ai account, run `claude setup-token`.
+1. Run `claude setup-token`, which creates a long-lived Claude Code OAuth token.
 2. Add the token as `CLAUDE_CODE_OAUTH_TOKEN` in the `review` environment, not as a repository secret.
 3. Set a reminder about a month before the expiry it shows.
-
-Reviews draw on the subscription's usage. Actions minutes are free for public repositories.
 
 ### D. Rehearse
 
@@ -202,10 +200,6 @@ Reviews draw on the subscription's usage. Actions minutes are free for public re
    - `automerge.yml` comments "Would not merge" and adds `human-merge`;
    - the **Review with Claude** step's log shows no Bash, WebFetch or GitHub write calls. `post_review.py` would also have rejected the review if the session log showed any.
 3. Close the pull request. The next `detect.yml` run deletes the branch.
-
-### Your account is the remaining weak point
-
-No automation uses a personal GitHub identity, but an org owner can change every rule. Use a passkey or hardware security key, keep recovery codes offline, and consider a second trusted org owner.
 
 ## Design notes
 
