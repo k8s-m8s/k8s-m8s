@@ -472,6 +472,45 @@ def linkerd():
     return releases
 
 
+@extractor("consul-k8s")
+def consul_k8s():
+    """The Kubernetes compatibility table in HashiCorp's docs for the newest Consul docs
+    version, per consul-k8s release. Rows are keyed by Consul version; a cell can list
+    several consul-k8s releases, each with its own Kubernetes range."""
+    repo = "hashicorp/web-unified-docs"
+    sha = commit_sha(repo)
+    docs = [name for name in listdir(repo, sha, "content/consul") if re.fullmatch(r"v1\.\d+\.x", name)]
+    need(docs, "no versioned Consul docs found")
+    latest = max(docs, key=lambda name: version_key(name[1:-2]))
+    page = f"content/consul/{latest}/content/docs/upgrade/k8s/compatibility.mdx"
+    need("@include 'tables/compatibility/k8s/version.mdx'" in read(repo, sha, page), "the page no longer includes the table")
+    path = f"content/consul/{latest}/content/partials/tables/compatibility/k8s/version.mdx"
+    rows = [[cell.replace("`", "") for cell in row] for row in table_rows(read(repo, sha, path))]
+    wording = "Compatible Kubernetes versions"
+    need(rows and rows[0][:3] == ["Consul version", "Compatible consul-k8s versions", wording], "table header changed")
+    commit = file_commit(repo, sha, path)
+    found = {}
+    for row in rows[2:]:
+        versions = [v.strip() for v in row[1].split("<br />")]
+        ranges = [r.strip() for r in row[2].split("<br />")]
+        need(len(versions) == len(ranges), f"cells for Consul {row[0]} don't pair up")
+        for version, text in zip(versions, ranges):
+            v = re.fullmatch(r"(\d+\.\d+)\.x", version)
+            r = re.fullmatch(r"(1\.\d+)\.x - (1\.\d+)\.x", text)
+            need(v and r, f"unexpected cell '{version}' / '{text}'")
+            need(found.get(v.group(1), r.groups()) == r.groups(), f"consul-k8s {v.group(1)} has two ranges")
+            found[v.group(1)] = r.groups()
+    return [
+        {
+            "version": version,
+            "stated": {"min": low, "max": high, "wording": wording},
+            "source": f"https://github.com/{repo}/blob/main/{path}",
+            "source_commit": commit,
+        }
+        for version, (low, high) in found.items()
+    ]
+
+
 @extractor("calico")
 def calico():
     repo = "tigera/docs"
