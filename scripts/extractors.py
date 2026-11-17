@@ -761,6 +761,45 @@ def karpenter():
     return releases
 
 
+# --- workloads and runtimes --------------------------------------------------
+
+@extractor("kubevirt")
+def kubevirt():
+    """The sig-release support matrix. Upstream defines an EOL cell as a Kubernetes
+    version that KubeVirt supported, now past its end of life, so it is a support
+    claim like a tick."""
+    repo, path = "kubevirt/sig-release", "releases/k8s-support-matrix.md"
+    sha = commit_sha(repo)
+    text = read(repo, sha, path)
+    wording = "KubeVirt to Kubernetes version support matrix"
+    need(text.lstrip().startswith(f"# {wording}"), "page title changed")
+    need("_EOL_ means that the Kubernetes version was supported by KubeVirt but has reached end of life" in text,
+         "the note defining EOL changed")
+    rows = table_rows(text)
+    need(rows and rows[0][0] == "KubeVirt version", "table header changed")
+    columns = []
+    for cell in rows[0][1:]:
+        minor = re.fullmatch(r"(1\.\d+)(<sup>EOL</sup>)?", cell)
+        need(minor, f"unexpected column '{cell}'")
+        columns.append(minor.group(1))
+    commit = file_commit(repo, sha, path)
+    releases = []
+    for row in rows[2:]:
+        need(len(row) == len(columns) + 1 and re.fullmatch(r"\d+\.\d+", row[0]), f"unexpected row {row[:2]}")
+        need(all(c in ("✓", "EOL", "-") for c in row[1:]), f"unexpected cell in row {row[0]}")
+        supported = sorted((m for m, c in zip(columns, row[1:]) if c in ("✓", "EOL")), key=version_key)
+        if not supported:
+            continue
+        need(contiguous(supported), f"supported versions for {row[0]} are not one range")
+        releases.append({
+            "version": row[0],
+            "stated": {"min": supported[0], "max": supported[-1], "wording": wording},
+            "source": f"https://github.com/{repo}/blob/main/{path}",
+            "source_commit": commit,
+        })
+    return releases
+
+
 # --- Kubernetes window -------------------------------------------------------
 
 def kubernetes_window():
