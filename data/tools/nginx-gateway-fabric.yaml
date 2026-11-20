@@ -11,6 +11,14 @@ notes: >-
   is kept as no longer listed. The table's Edge row (the unreleased main
   branch) and the OpenShift table are not recorded.
 releases:
+  - version: "2.9.0"
+    stated:
+      min: "1.32"
+      max: latest
+      wording: software versions NGINX Gateway Fabric supports
+    source: https://github.com/nginx/nginx-gateway-fabric#technical-specifications
+    source_commit: 5f6478bc9327a76faa6c029926a1349f84dbb33d
+    verified: 2026-11-20
   - version: "2.8.1"
     stated:
       min: "1.32"
