@@ -17,7 +17,7 @@ releases:
       wording: compatible with the following Kubernetes versions
     source: https://github.com/fluxcd/flux2/releases/tag/v2.10.0
     source_commit: 3fa784edd773d56630bb9f62645e08f70c2cff0a
-    verified: 2026-11-16
+    verified: 2026-11-23
   - version: "2.9"
     stated:
       min: "1.34"
@@ -25,7 +25,7 @@ releases:
       wording: compatible with the following Kubernetes versions
     source: https://github.com/fluxcd/flux2/releases/tag/v2.9.0
     source_commit: dcc7def046cba2fe8d15d9737a4c250100f62fe0
-    verified: 2026-11-16
+    verified: 2026-11-23
   - version: "2.8"
     stated:
       min: "1.33"
@@ -33,7 +33,7 @@ releases:
       wording: compatible with the following Kubernetes versions
     source: https://github.com/fluxcd/flux2/releases/tag/v2.8.0
     source_commit: ac71dd88a3e6170a068873ea78aafe90f8c9c82c
-    verified: 2026-11-16
+    verified: 2026-11-23
   - version: "2.7"
     stated:
       min: "1.32"
@@ -41,7 +41,7 @@ releases:
       wording: compatible with the following Kubernetes versions
     source: https://github.com/fluxcd/flux2/releases/tag/v2.7.0
     source_commit: f251e8e8a9b289283be055d65ae4a4ee595f7a14
-    verified: 2026-11-16
+    verified: 2026-11-23
   - version: "2.6"
     stated:
       min: "1.31"
@@ -49,7 +49,7 @@ releases:
       wording: compatible with the following Kubernetes versions
     source: https://github.com/fluxcd/flux2/releases/tag/v2.6.0
     source_commit: 4c66d375454b5841cc816e7728e8ae684cf70dc3
-    verified: 2026-11-16
+    verified: 2026-11-23
   - version: "2.5"
     stated:
       min: "1.30"
@@ -57,7 +57,7 @@ releases:
       wording: compatible with the following Kubernetes versions
     source: https://github.com/fluxcd/flux2/releases/tag/v2.5.0
     source_commit: af67405ee43a6cd66e0b73f4b3802e8583f9d961
-    verified: 2026-11-16
+    verified: 2026-11-23
   - version: "2.4"
     stated:
       min: "1.29"
@@ -65,7 +65,7 @@ releases:
       wording: compatible with the following Kubernetes versions
     source: https://github.com/fluxcd/flux2/releases/tag/v2.4.0
     source_commit: 5350425cdcd5fa015337e09fa502153c0275bd4b
-    verified: 2026-11-16
+    verified: 2026-11-23
   - version: "2.3"
     stated:
       min: "1.28"
@@ -73,7 +73,7 @@ releases:
       wording: compatible with the following Kubernetes versions
     source: https://github.com/fluxcd/flux2/releases/tag/v2.3.0
     source_commit: 896e0fa46d5107a05e953dd0a5261d78a145ec8c
-    verified: 2026-11-16
+    verified: 2026-11-23
   - version: "2.2"
     stated:
       min: "1.26"
@@ -81,7 +81,7 @@ releases:
       wording: compatible with the following Kubernetes versions
     source: https://github.com/fluxcd/flux2/releases/tag/v2.2.0
     source_commit: 53ad742e2d0f6f0df19ec11a25a0e3adce80c475
-    verified: 2026-11-16
+    verified: 2026-11-23
   - version: "2.1"
     stated:
       min: "1.25"
@@ -89,7 +89,7 @@ releases:
       wording: compatible with the following Kubernetes versions
     source: https://github.com/fluxcd/flux2/releases/tag/v2.1.0
     source_commit: 22cf986a79a6da2dd1bcd91b5eef763400f0104b
-    verified: 2026-11-16
+    verified: 2026-11-23
   - version: "2.0"
     stated:
       min: "1.24"
@@ -97,4 +97,4 @@ releases:
       wording: compatible with the following Kubernetes versions
     source: https://github.com/fluxcd/flux2/releases/tag/v2.0.0
     source_commit: 9ea0a535eab2c99121fb3ac742e333b4a9f07970
-    verified: 2026-11-16
+    verified: 2026-11-23

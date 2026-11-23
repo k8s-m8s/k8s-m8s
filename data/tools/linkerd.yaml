@@ -23,7 +23,7 @@ releases:
       wording: Supported Kubernetes Versions
     source: https://github.com/linkerd/website/blob/main/linkerd.io/content/docs/reference/k8s-versions.md
     source_commit: cc607d87c1f13ec1a29d3994f514e245f27c7cf1
-    verified: 2026-11-17
+    verified: 2026-11-23
   - version: "2.19"
     stated:
       min: "1.22"
@@ -31,7 +31,7 @@ releases:
       wording: Supported Kubernetes Versions
     source: https://github.com/linkerd/website/blob/main/linkerd.io/content/docs/reference/k8s-versions.md
     source_commit: cc607d87c1f13ec1a29d3994f514e245f27c7cf1
-    verified: 2026-11-17
+    verified: 2026-11-23
   - version: "2.18"
     stated:
       min: "1.22"
@@ -39,7 +39,7 @@ releases:
       wording: Supported Kubernetes Versions
     source: https://github.com/linkerd/website/blob/main/linkerd.io/content/docs/reference/k8s-versions.md
     source_commit: cc607d87c1f13ec1a29d3994f514e245f27c7cf1
-    verified: 2026-11-17
+    verified: 2026-11-23
   - version: "2.17"
     stated:
       min: "1.22"
@@ -47,7 +47,7 @@ releases:
       wording: Supported Kubernetes Versions
     source: https://github.com/linkerd/website/blob/main/linkerd.io/content/docs/reference/k8s-versions.md
     source_commit: cc607d87c1f13ec1a29d3994f514e245f27c7cf1
-    verified: 2026-11-17
+    verified: 2026-11-23
   - version: "2.16"
     stated:
       min: "1.22"
@@ -55,7 +55,7 @@ releases:
       wording: Supported Kubernetes Versions
     source: https://github.com/linkerd/website/blob/main/linkerd.io/content/docs/reference/k8s-versions.md
     source_commit: cc607d87c1f13ec1a29d3994f514e245f27c7cf1
-    verified: 2026-11-17
+    verified: 2026-11-23
   - version: "2.15"
     stated:
       min: "1.22"
@@ -63,7 +63,7 @@ releases:
       wording: Supported Kubernetes Versions
     source: https://github.com/linkerd/website/blob/main/linkerd.io/content/docs/reference/k8s-versions.md
     source_commit: cc607d87c1f13ec1a29d3994f514e245f27c7cf1
-    verified: 2026-11-17
+    verified: 2026-11-23
   - version: "2.14"
     stated:
       min: "1.21"
@@ -71,7 +71,7 @@ releases:
       wording: Supported Kubernetes Versions
     source: https://github.com/linkerd/website/blob/main/linkerd.io/content/docs/reference/k8s-versions.md
     source_commit: cc607d87c1f13ec1a29d3994f514e245f27c7cf1
-    verified: 2026-11-17
+    verified: 2026-11-23
   - version: "2.13"
     stated:
       min: "1.21"
@@ -79,7 +79,7 @@ releases:
       wording: Supported Kubernetes Versions
     source: https://github.com/linkerd/website/blob/main/linkerd.io/content/docs/reference/k8s-versions.md
     source_commit: cc607d87c1f13ec1a29d3994f514e245f27c7cf1
-    verified: 2026-11-17
+    verified: 2026-11-23
   - version: "2.12"
     stated:
       min: "1.21"
@@ -87,7 +87,7 @@ releases:
       wording: Supported Kubernetes Versions
     source: https://github.com/linkerd/website/blob/main/linkerd.io/content/docs/reference/k8s-versions.md
     source_commit: cc607d87c1f13ec1a29d3994f514e245f27c7cf1
-    verified: 2026-11-17
+    verified: 2026-11-23
   - version: "2.11"
     stated:
       min: "1.17"
@@ -95,7 +95,7 @@ releases:
       wording: Supported Kubernetes Versions
     source: https://github.com/linkerd/website/blob/main/linkerd.io/content/docs/reference/k8s-versions.md
     source_commit: cc607d87c1f13ec1a29d3994f514e245f27c7cf1
-    verified: 2026-11-17
+    verified: 2026-11-23
   - version: "2.10"
     stated:
       min: "1.16"
@@ -103,4 +103,4 @@ releases:
       wording: Supported Kubernetes Versions
     source: https://github.com/linkerd/website/blob/main/linkerd.io/content/docs/reference/k8s-versions.md
     source_commit: cc607d87c1f13ec1a29d3994f514e245f27c7cf1
-    verified: 2026-11-17
+    verified: 2026-11-23
