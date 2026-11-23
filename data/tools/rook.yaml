@@ -15,7 +15,7 @@ releases:
       wording: are supported
     source: https://github.com/rook/rook/blob/release-1.21/Documentation/Getting-Started/Prerequisites/prerequisites.md
     source_commit: f74777db50d272c7f338d31167a6c2ee5346f6ed
-    verified: 2026-11-16
+    verified: 2026-11-23
   - version: "1.20"
     stated:
       min: "1.31"
@@ -23,7 +23,7 @@ releases:
       wording: are supported
     source: https://github.com/rook/rook/blob/release-1.20/Documentation/Getting-Started/Prerequisites/prerequisites.md
     source_commit: 16e9ddcd55b28f5cfbecdd2c187b96c345ec7506
-    verified: 2026-11-16
+    verified: 2026-11-23
   - version: "1.19"
     stated:
       min: "1.30"
@@ -31,7 +31,7 @@ releases:
       wording: are supported
     source: https://github.com/rook/rook/blob/release-1.19/Documentation/Getting-Started/Prerequisites/prerequisites.md
     source_commit: ecb79b5faec93081c2417d9c6634bfd29e1a4eea
-    verified: 2026-11-16
+    verified: 2026-11-23
   - version: "1.18"
     stated:
       min: "1.29"
@@ -39,7 +39,7 @@ releases:
       wording: are supported
     source: https://github.com/rook/rook/blob/release-1.18/Documentation/Getting-Started/Prerequisites/prerequisites.md
     source_commit: 4941d02bdcc52917a719e9651b2cc6190d7c3d26
-    verified: 2026-11-16
+    verified: 2026-11-23
   - version: "1.17"
     stated:
       min: "1.28"
@@ -47,7 +47,7 @@ releases:
       wording: are supported
     source: https://github.com/rook/rook/blob/release-1.17/Documentation/Getting-Started/Prerequisites/prerequisites.md
     source_commit: b74888ec9efcf0302ff0e27a4354edb0801b9995
-    verified: 2026-11-16
+    verified: 2026-11-23
   - version: "1.16"
     stated:
       min: "1.27"
@@ -55,7 +55,7 @@ releases:
       wording: are supported
     source: https://github.com/rook/rook/blob/release-1.16/Documentation/Getting-Started/Prerequisites/prerequisites.md
     source_commit: 26689e9a5b151a08bc06896ec1f640de9fa0378d
-    verified: 2026-11-16
+    verified: 2026-11-23
   - version: "1.15"
     stated:
       min: "1.26"
@@ -63,4 +63,4 @@ releases:
       wording: are supported
     source: https://github.com/rook/rook/blob/release-1.15/Documentation/Getting-Started/Prerequisites/prerequisites.md
     source_commit: 955876cc4464d97ea05a02820feb8a9cb22bce8a
-    verified: 2026-11-16
+    verified: 2026-11-23

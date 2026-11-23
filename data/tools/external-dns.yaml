@@ -18,7 +18,7 @@ releases:
       - max: "1.20"
     source: https://github.com/kubernetes-sigs/external-dns#kubernetes-version-compatibility
     source_commit: a1527c0913b5ebcfaa6b96bac47e0fddf93a9325
-    verified: 2026-11-16
+    verified: 2026-11-23
   - version_range:
       min: "0.10"
       max: "0.17"
@@ -32,7 +32,7 @@ releases:
         max: latest
     source: https://github.com/kubernetes-sigs/external-dns#kubernetes-version-compatibility
     source_commit: a1527c0913b5ebcfaa6b96bac47e0fddf93a9325
-    verified: 2026-11-16
+    verified: 2026-11-23
   - version_range:
       max: "0.9"
     stated:
@@ -43,4 +43,4 @@ releases:
         max: latest
     source: https://github.com/kubernetes-sigs/external-dns#kubernetes-version-compatibility
     source_commit: a1527c0913b5ebcfaa6b96bac47e0fddf93a9325
-    verified: 2026-11-16
+    verified: 2026-11-23

@@ -5,4 +5,4 @@
 window: ["1.37", "1.36", "1.35"]
 source: https://kubernetes.io/releases/
 source_commit: 654d44546ac8d0dc288f14e14e467205e3f87ab1
-verified: 2026-11-16
+verified: 2026-11-23
