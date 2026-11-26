@@ -10,6 +10,14 @@ notes: >-
   but not supported". Those are not recorded: recording them as tested would
   rank them above supported, which upstream does not mean.
 releases:
+  - version: "1.31"
+    stated:
+      min: "1.35"
+      max: "1.37"
+      wording: Supported Kubernetes versions
+    source: https://github.com/cloudnative-pg/cloudnative-pg/blob/main/docs/src/supported_releases.md
+    source_commit: 62303c5680b8d61ae89b33d4a417e74faa50afa7
+    verified: 2026-11-26
   - version: "1.30"
     stated:
       min: "1.34"
