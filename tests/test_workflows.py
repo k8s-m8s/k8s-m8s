@@ -120,6 +120,8 @@ class WorkflowRulesTest(unittest.TestCase):
                 self.assertNotIn("repositories", step.get("with", {}), f"{file}:{name}")
                 self.assertTrue(any(k.startswith("permission-") for k in step["with"]), f"{file}:{name}: no permission inputs")
                 self.assertNotIn("permission-workflows", step["with"], f"{file}:{name}")
+                self.assertIn("client-id", step["with"], f"{file}:{name}: identify the App by its client ID")
+                self.assertNotIn("app-id", step["with"], f"{file}:{name}: app-id is deprecated")
                 reference = f"steps.{step['id']}.outputs.token"
                 users = [i for i, s in enumerate(steps) if reference in json.dumps(s)]
                 self.assertEqual(users, [index + 1], f"{file}:{name}: the token must be used by the next step only")
