@@ -1,0 +1,47 @@
+name: CodeQL
+
+# Code scanning for the Python scripts and the workflows, on pushes to main,
+# weekly, and on pull requests. A pull request whose changes are all under
+# data/ (every automated one) has no code to analyse, so it gets no CodeQL
+# check. Push runs are not filtered: GitHub advises against path filters on
+# push, because pull request analyses compare against main's latest analysis.
+# No secrets, and nothing from the repository is built or run (build-mode
+# none). Replaces CodeQL default setup, which has no path filters and must stay
+# turned off for this workflow's results to be accepted.
+# See docs/maintainers/automation.md.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - "data/**"
+  schedule:
+    - cron: "40 11 * * 3"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [actions, python]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: github/codeql-action/init@915412ff23e8b7659517e607487dbeae018f2934 # v4.39.5
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+      - uses: github/codeql-action/analyze@915412ff23e8b7659517e607487dbeae018f2934 # v4.39.5
+        with:
+          category: "/language:${{ matrix.language }}"

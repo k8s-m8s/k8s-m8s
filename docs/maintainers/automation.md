@@ -36,6 +36,7 @@ Claude checks changes; it doesn't detect them. Detection has to be reproducible,
 | Workflow | Trigger | What it does |
 |---|---|---|
 | `validate.yml` (Validate data) | `pull_request`, push to `main`, manual | Validation, tests, site build. No secrets, read-only. The only workflow that runs pull request code. |
+| `codeql.yml` (CodeQL) | `pull_request` unless every change is under `data/`, push to `main`, weekly, manual | Code scanning of the Python scripts and the workflows. No secrets; it can read the code and upload results. Builds and runs nothing (build-mode none). |
 | `detect.yml` (Detect upstream changes) | daily 05:43 UTC, manual | Reads every upstream statement (`verify.py --claims-only`). Opens one claim pull request per tool, a window pull request, and `needs-human` issues; closes them when they no longer apply. |
 | `verify.yml` (Weekly bookkeeping) | Mondays 06:17 UTC, manual | Refreshes `verified` and moved `source_commit` values on entries that still match (`verify.py --write`), as one `automated/bookkeeping` pull request. |
 | `review.yml` (Review claim changes) | after `validate.yml` on `automated/claim/**`, daily 07:13 UTC, manual | Claude checks each claim change against the upstream file at the recorded commit; `k8s-m8s-reviewer[bot]` posts the verdict. |
@@ -82,6 +83,8 @@ The automation also depends on these settings, which live in GitHub rather than 
 
 **Code owners.** `.github/CODEOWNERS` names the `@k8s-m8s/maintainers` team. GitHub ignores a code owner team that is secret or lacks write access.
 
+**Code scanning.** CodeQL default setup is off; `codeql.yml` is the configuration (advanced setup). Default setup has no path filters, so it can't skip pull requests that only change data. GitHub rejects a workflow's CodeQL results while default setup is on, so leave it off.
+
 **Claude token.** `CLAUDE_CODE_OAUTH_TOKEN` in the `review` environment is a long-lived Claude Code OAuth token, created with `claude setup-token`. It expires; see [Routine operations](#routine-operations).
 
 ### The actions allowlist
@@ -90,7 +93,7 @@ The allowlist decides which actions may run at all. The workflow files decide wh
 
 The settings are under **Settings → Actions → General → Actions permissions**. They can also be set at organization level, which caps what each repository may allow:
 
-- **Allow k8s-m8s, and select non-k8s-m8s, actions and reusable workflows**, with **Allow actions created by GitHub** ticked and **Allow actions by Marketplace verified creators** unticked.
+- **Allow k8s-m8s, and select non-k8s-m8s, actions and reusable workflows**, with **Allow actions created by GitHub** ticked and **Allow actions by Marketplace verified creators** unticked. Actions created by GitHub include `github/codeql-action`, which `codeql.yml` uses.
 - **Allow specified actions and reusable workflows**:
   ```
   anthropics/claude-code-action@*,
@@ -104,7 +107,7 @@ The settings are under **Settings → Actions → General → Actions permission
 
 `tests/test_workflows.py` enforces these; it fails if a workflow breaks one.
 
-1. **Jobs that hold secrets run from `main`.** A job that uses environment `automation` or `review`, mints an App token or reads a secret may be triggered only by `schedule`, `workflow_dispatch`, `workflow_run` or `issue_comment`. GitHub takes those workflow definitions from the default branch. No workflow uses `pull_request_target`. `validate.yml` runs on `pull_request` with no secrets and `contents: read`.
+1. **Jobs that hold secrets run from `main`.** A job that uses environment `automation` or `review`, mints an App token or reads a secret may be triggered only by `schedule`, `workflow_dispatch`, `workflow_run` or `issue_comment`. GitHub takes those workflow definitions from the default branch. No workflow uses `pull_request_target`. `validate.yml` runs on `pull_request` with no secrets and `contents: read`. `codeql.yml` also runs on `pull_request`, with no secrets, `contents: read`, and `security-events: write` to upload its results. It builds and runs nothing from the pull request and reads no configuration from it.
 2. **Pull request content is data, never code.** In a job that holds secrets, every script runs from a `main` checkout (the workspace root, or `rules/` in `review.yml`). The pull request is checked out at its head SHA into `pr/` with `persist-credentials: false` and read with git, or read with `git show` from the `main` checkout. Nothing under `pr/` is executed, imported, sourced, installed or used as configuration. `review.yml` deletes `pr/` before Claude starts.
 3. **An App token exists only in the step that mints it and the next step.** It is minted with `actions/create-github-app-token` directly before the step that uses it, with `permission-*` inputs and no `owner` or `repositories` (so it covers this repository only). It never reaches `GITHUB_ENV`, job `env` or job outputs.
 4. **Jobs that hold tokens are kept small.** They use only `actions/checkout`, `actions/setup-python`, `actions/create-github-app-token`, `actions/download-artifact`, `anthropics/claude-code-action` (review job only) and repository scripts run from `main`. Every action is pinned by commit SHA. (`claude-code-action` itself uses `oven-sh/setup-bun` internally, pinned by SHA inside the action.) `tests/test_workflows.py` enforces this list. The repository's Actions policy also blocks third-party actions other than these two: see [the actions allowlist](#the-actions-allowlist).
