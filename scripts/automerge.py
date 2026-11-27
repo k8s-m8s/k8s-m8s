@@ -36,6 +36,7 @@ from check_diff import (KUBERNETES_FILE, MINOR, changed_paths, check_bookkeeping
 
 ROOT = Path(__file__).resolve().parent.parent
 MIN_AGE = datetime.timedelta(hours=2)
+STALL = datetime.timedelta(hours=24)
 DECISION = re.compile(r"<!-- k8s-m8s-automerge head=([0-9a-f]{40}) decision=([a-z-]+) -->")
 PASSED = {"success", "neutral", "skipped"}
 WINDOW_BRANCH = "automated/window"
@@ -216,6 +217,18 @@ def window_gates(pull, automation, now):
     return released
 
 
+def stalled(pull, exc, now):
+    """A waiting pull request becomes a refusal once its head commit is a day old, so a review that never
+    comes (an expired token, an outage) or a check that never finishes is labelled instead of waiting
+    unseen. Not for a pull request already labelled human-merge, or one whose head moved while checking."""
+    if labelled(pull) or str(exc).startswith("head moved"):
+        return None
+    committed = ghapi.get(f"repos/{ghapi.repo()}/commits/{pull['head']['sha']}")["commit"]["committer"]["date"]
+    if now - when(committed) <= STALL:
+        return None
+    return Refuse(f"still waiting after 24 hours: {exc}")
+
+
 def last_decision(comments, automation, head):
     for c in sorted(comments, key=lambda c: (c["created_at"], c["id"]), reverse=True):
         if c["user"]["login"] == automation:
@@ -232,10 +245,14 @@ def decide(pull, env, now):
     number, head, ref = pull["number"], pull["head"]["sha"], pull["head"]["ref"]
     if ref == "automated/bookkeeping":
         try:
-            bookkeeping_gates(pull, automation)
-        except Wait as exc:
-            print(f"#{number}: waiting, {exc}")
-            return []
+            try:
+                bookkeeping_gates(pull, automation)
+            except Wait as exc:
+                refusal = stalled(pull, exc, now)
+                if refusal is None:
+                    print(f"#{number}: waiting, {exc}")
+                    return []
+                raise refusal from None
         except Refuse as exc:
             print(f"#{number}: refused, {exc}")
             return [] if labelled(pull) else [
@@ -250,10 +267,14 @@ def decide(pull, env, now):
         print(f"#{number}: {ref} never merges automatically")
         return []
     try:
-        detail = gates()
-    except Wait as exc:
-        print(f"#{number}: waiting, {exc}")
-        return []
+        try:
+            detail = gates()
+        except Wait as exc:
+            refusal = stalled(pull, exc, now)
+            if refusal is None:
+                print(f"#{number}: waiting, {exc}")
+                return []
+            raise refusal from None
     except Refuse as exc:
         print(f"#{number}: refused, {exc}")
         actions = [] if labelled(pull) else [{"pr": number, "action": "label", "label": "human-merge"}]
