@@ -19,7 +19,7 @@ releases:
       wording: Compatibility
     source: https://github.com/prometheus-operator/kube-prometheus#compatibility
     source_commit: 62a918ae2a7bed819f7fb61c4eb60e744e82a612
-    verified: 2026-11-23
+    verified: 2026-11-27
   - version: "0.18"
     stated:
       min: "1.33"
@@ -27,7 +27,7 @@ releases:
       wording: Compatibility
     source: https://github.com/prometheus-operator/kube-prometheus#compatibility
     source_commit: 62a918ae2a7bed819f7fb61c4eb60e744e82a612
-    verified: 2026-11-23
+    verified: 2026-11-27
   - version: "0.17"
     stated:
       min: "1.33"
@@ -35,4 +35,4 @@ releases:
       wording: Compatibility
     source: https://github.com/prometheus-operator/kube-prometheus#compatibility
     source_commit: 62a918ae2a7bed819f7fb61c4eb60e744e82a612
-    verified: 2026-11-23
+    verified: 2026-11-27

@@ -18,124 +18,124 @@ releases:
       wording: software versions NGINX Gateway Fabric supports
     source: https://github.com/nginx/nginx-gateway-fabric#technical-specifications
     source_commit: 8818f5b1b748eb936dc823cf23cddbf8d378f45b
-    verified: 2026-11-25
+    verified: 2026-11-27
   - version: "2.9.0"
     stated:
       min: "1.32"
       max: latest
       wording: software versions NGINX Gateway Fabric supports
     source: https://github.com/nginx/nginx-gateway-fabric#technical-specifications
-    source_commit: 5f6478bc9327a76faa6c029926a1349f84dbb33d
-    verified: 2026-11-23
+    source_commit: 8818f5b1b748eb936dc823cf23cddbf8d378f45b
+    verified: 2026-11-27
   - version: "2.8.1"
     stated:
       min: "1.32"
       max: latest
       wording: software versions NGINX Gateway Fabric supports
     source: https://github.com/nginx/nginx-gateway-fabric#technical-specifications
-    source_commit: 5f6478bc9327a76faa6c029926a1349f84dbb33d
-    verified: 2026-11-23
+    source_commit: 8818f5b1b748eb936dc823cf23cddbf8d378f45b
+    verified: 2026-11-27
   - version: "2.7.2"
     stated:
       min: "1.32"
       max: latest
       wording: software versions NGINX Gateway Fabric supports
     source: https://github.com/nginx/nginx-gateway-fabric#technical-specifications
-    source_commit: 5f6478bc9327a76faa6c029926a1349f84dbb33d
-    verified: 2026-11-23
+    source_commit: 8818f5b1b748eb936dc823cf23cddbf8d378f45b
+    verified: 2026-11-27
   - version: "2.6.8"
     stated:
       min: "1.31"
       max: latest
       wording: software versions NGINX Gateway Fabric supports
     source: https://github.com/nginx/nginx-gateway-fabric#technical-specifications
-    source_commit: 5f6478bc9327a76faa6c029926a1349f84dbb33d
-    verified: 2026-11-23
+    source_commit: 8818f5b1b748eb936dc823cf23cddbf8d378f45b
+    verified: 2026-11-27
   - version: "2.5.1"
     stated:
       min: "1.31"
       max: latest
       wording: software versions NGINX Gateway Fabric supports
     source: https://github.com/nginx/nginx-gateway-fabric#technical-specifications
-    source_commit: 5f6478bc9327a76faa6c029926a1349f84dbb33d
-    verified: 2026-11-23
+    source_commit: 8818f5b1b748eb936dc823cf23cddbf8d378f45b
+    verified: 2026-11-27
   - version: "2.4.2"
     stated:
       min: "1.25"
       max: latest
       wording: software versions NGINX Gateway Fabric supports
     source: https://github.com/nginx/nginx-gateway-fabric#technical-specifications
-    source_commit: 5f6478bc9327a76faa6c029926a1349f84dbb33d
-    verified: 2026-11-23
+    source_commit: 8818f5b1b748eb936dc823cf23cddbf8d378f45b
+    verified: 2026-11-27
   - version: "2.3.0"
     stated:
       min: "1.25"
       max: latest
       wording: software versions NGINX Gateway Fabric supports
     source: https://github.com/nginx/nginx-gateway-fabric#technical-specifications
-    source_commit: 5f6478bc9327a76faa6c029926a1349f84dbb33d
-    verified: 2026-11-23
+    source_commit: 8818f5b1b748eb936dc823cf23cddbf8d378f45b
+    verified: 2026-11-27
   - version: "2.2.2"
     stated:
       min: "1.25"
       max: latest
       wording: software versions NGINX Gateway Fabric supports
     source: https://github.com/nginx/nginx-gateway-fabric#technical-specifications
-    source_commit: 5f6478bc9327a76faa6c029926a1349f84dbb33d
-    verified: 2026-11-23
+    source_commit: 8818f5b1b748eb936dc823cf23cddbf8d378f45b
+    verified: 2026-11-27
   - version: "2.1.4"
     stated:
       min: "1.25"
       max: latest
       wording: software versions NGINX Gateway Fabric supports
     source: https://github.com/nginx/nginx-gateway-fabric#technical-specifications
-    source_commit: 5f6478bc9327a76faa6c029926a1349f84dbb33d
-    verified: 2026-11-23
+    source_commit: 8818f5b1b748eb936dc823cf23cddbf8d378f45b
+    verified: 2026-11-27
   - version: "2.0.2"
     stated:
       min: "1.25"
       max: latest
       wording: software versions NGINX Gateway Fabric supports
     source: https://github.com/nginx/nginx-gateway-fabric#technical-specifications
-    source_commit: 5f6478bc9327a76faa6c029926a1349f84dbb33d
-    verified: 2026-11-23
+    source_commit: 8818f5b1b748eb936dc823cf23cddbf8d378f45b
+    verified: 2026-11-27
   - version: "1.6.2"
     stated:
       min: "1.25"
       max: latest
       wording: software versions NGINX Gateway Fabric supports
     source: https://github.com/nginx/nginx-gateway-fabric#technical-specifications
-    source_commit: 5f6478bc9327a76faa6c029926a1349f84dbb33d
-    verified: 2026-11-23
+    source_commit: 8818f5b1b748eb936dc823cf23cddbf8d378f45b
+    verified: 2026-11-27
   - version: "1.5.1"
     stated:
       min: "1.25"
       max: latest
       wording: software versions NGINX Gateway Fabric supports
     source: https://github.com/nginx/nginx-gateway-fabric#technical-specifications
-    source_commit: 5f6478bc9327a76faa6c029926a1349f84dbb33d
-    verified: 2026-11-23
+    source_commit: 8818f5b1b748eb936dc823cf23cddbf8d378f45b
+    verified: 2026-11-27
   - version: "1.4.0"
     stated:
       min: "1.25"
       max: latest
       wording: software versions NGINX Gateway Fabric supports
     source: https://github.com/nginx/nginx-gateway-fabric#technical-specifications
-    source_commit: 5f6478bc9327a76faa6c029926a1349f84dbb33d
-    verified: 2026-11-23
+    source_commit: 8818f5b1b748eb936dc823cf23cddbf8d378f45b
+    verified: 2026-11-27
   - version: "1.3.0"
     stated:
       min: "1.25"
       max: latest
       wording: software versions NGINX Gateway Fabric supports
     source: https://github.com/nginx/nginx-gateway-fabric#technical-specifications
-    source_commit: 5f6478bc9327a76faa6c029926a1349f84dbb33d
-    verified: 2026-11-23
+    source_commit: 8818f5b1b748eb936dc823cf23cddbf8d378f45b
+    verified: 2026-11-27
   - version: "1.2.0"
     stated:
       min: "1.23"
       max: latest
       wording: software versions NGINX Gateway Fabric supports
     source: https://github.com/nginx/nginx-gateway-fabric#technical-specifications
-    source_commit: 5f6478bc9327a76faa6c029926a1349f84dbb33d
-    verified: 2026-11-23
+    source_commit: 8818f5b1b748eb936dc823cf23cddbf8d378f45b
+    verified: 2026-11-27

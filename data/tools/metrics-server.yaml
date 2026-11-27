@@ -15,7 +15,7 @@ releases:
       wording: Supported Kubernetes version
     source: https://github.com/kubernetes-sigs/metrics-server#compatibility-matrix
     source_commit: dd111d0ac9716ed16fe8d6b6902f279fe898cc69
-    verified: 2026-11-23
+    verified: 2026-11-27
   - version: "0.8"
     stated:
       min: "1.31"
@@ -23,7 +23,7 @@ releases:
       wording: Supported Kubernetes version
     source: https://github.com/kubernetes-sigs/metrics-server#compatibility-matrix
     source_commit: dd111d0ac9716ed16fe8d6b6902f279fe898cc69
-    verified: 2026-11-23
+    verified: 2026-11-27
   - version: "0.7"
     stated:
       min: "1.27"
@@ -31,7 +31,7 @@ releases:
       wording: Supported Kubernetes version
     source: https://github.com/kubernetes-sigs/metrics-server#compatibility-matrix
     source_commit: dd111d0ac9716ed16fe8d6b6902f279fe898cc69
-    verified: 2026-11-23
+    verified: 2026-11-27
   - version: "0.6"
     stated:
       min: "1.25"
@@ -39,7 +39,7 @@ releases:
       wording: Supported Kubernetes version
     source: https://github.com/kubernetes-sigs/metrics-server#compatibility-matrix
     source_commit: dd111d0ac9716ed16fe8d6b6902f279fe898cc69
-    verified: 2026-11-23
+    verified: 2026-11-27
   - version: "0.5"
     stated:
       min: "1.8"
@@ -47,7 +47,7 @@ releases:
       wording: Supported Kubernetes version
     source: https://github.com/kubernetes-sigs/metrics-server#compatibility-matrix
     source_commit: dd111d0ac9716ed16fe8d6b6902f279fe898cc69
-    verified: 2026-11-23
+    verified: 2026-11-27
   - version: "0.4"
     stated:
       min: "1.8"
@@ -55,7 +55,7 @@ releases:
       wording: Supported Kubernetes version
     source: https://github.com/kubernetes-sigs/metrics-server#compatibility-matrix
     source_commit: dd111d0ac9716ed16fe8d6b6902f279fe898cc69
-    verified: 2026-11-23
+    verified: 2026-11-27
   - version: "0.3"
     stated:
       min: "1.8"
@@ -63,4 +63,4 @@ releases:
       wording: Supported Kubernetes version
     source: https://github.com/kubernetes-sigs/metrics-server#compatibility-matrix
     source_commit: dd111d0ac9716ed16fe8d6b6902f279fe898cc69
-    verified: 2026-11-23
+    verified: 2026-11-27
