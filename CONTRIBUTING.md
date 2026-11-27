@@ -89,7 +89,7 @@ Anything not covered by these fields is shown as unknown.
 
 In: Kubernetes compatibility of tool versions, for the latest three Kubernetes minors. Older data is kept as history.
 
-Out for now: Helm chart versions, image lists, release-note summaries, tool-to-tool compatibility, pre-release Kubernetes versions, cloud-provider extended support, community reports.
+Out for now: Helm chart versions, image lists, release-note summaries, tool-to-tool compatibility, pre-release Kubernetes versions, pre-release tool versions (release candidates, previews and development branches), cloud-provider extended support, community reports.
 
 ## Please don't
 
