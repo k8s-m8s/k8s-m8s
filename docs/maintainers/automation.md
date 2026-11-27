@@ -55,8 +55,8 @@ Labels: `claim-change`, `window-change`, `bookkeeping`, `human-merge`, `needs-hu
 
 | Environment | Secrets | Variables | Deployment branches |
 |---|---|---|---|
-| `automation` | `AUTOMATION_APP_PRIVATE_KEY` | `AUTOMATION_APP_ID` | `main` only |
-| `review` | `CLAUDE_CODE_OAUTH_TOKEN`, `REVIEWER_APP_PRIVATE_KEY` | `REVIEWER_APP_ID` | `main` only |
+| `automation` | `AUTOMATION_APP_PRIVATE_KEY` | `AUTOMATION_APP_CLIENT_ID` (the App's client ID) | `main` only |
+| `review` | `CLAUDE_CODE_OAUTH_TOKEN`, `REVIEWER_APP_PRIVATE_KEY` | `REVIEWER_APP_CLIENT_ID` (the App's client ID) | `main` only |
 
 | Repository variable | Value |
 |---|---|

@@ -61,7 +61,7 @@ jobs:
         if: steps.decide.outputs.act == 'true'
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
-          app-id: ${{ vars.AUTOMATION_APP_ID }}
+          client-id: ${{ vars.AUTOMATION_APP_CLIENT_ID }}
           private-key: ${{ secrets.AUTOMATION_APP_PRIVATE_KEY }}
           permission-contents: write
           permission-pull-requests: write

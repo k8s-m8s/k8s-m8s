@@ -132,7 +132,7 @@ jobs:
         if: ${{ !cancelled() && steps.context.outcome == 'success' }}
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
-          app-id: ${{ vars.REVIEWER_APP_ID }}
+          client-id: ${{ vars.REVIEWER_APP_CLIENT_ID }}
           private-key: ${{ secrets.REVIEWER_APP_PRIVATE_KEY }}
           permission-pull-requests: write
       - name: Post the review as the reviewer App
