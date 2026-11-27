@@ -10,6 +10,9 @@ Usage:
                                             # removed rows into the data files
     python scripts/verify.py --claims-only  # write only the entries whose claims changed,
                                             # and the Kubernetes window if it changed
+    python scripts/verify.py --claims-only --bookkeeping-out DIR
+                                            # also write, from the same reading, what --write
+                                            # would make of the data into DIR/data
     python scripts/verify.py --detect-only --report-json report.json
                                             # change nothing, write a machine-readable report
 
@@ -31,10 +34,13 @@ Refreshing `verified` alone is not reported as a finding.
 """
 
 import argparse
+import copy
 import datetime
 import json
 import re
+import shutil
 import sys
+from pathlib import Path
 
 from common import KUBERNETES_FILE, load_yaml, release_label, tool_files, version_key, write_releases
 from extractors import EXTRACTORS, UpstreamChanged, kubernetes_window
@@ -237,8 +243,13 @@ def main():
                        help="write only entries whose claims changed (and the window if it changed)")
     group.add_argument("--detect-only", action="store_true", help="change nothing (the default); for clarity in workflows")
     parser.add_argument("--report-json", metavar="PATH", help="write the classified findings to PATH as JSON")
+    parser.add_argument("--bookkeeping-out", metavar="DIR",
+                        help="with --claims-only: also write the bookkeeping refresh (what --write would write) "
+                             "of the same reading to DIR/data, so upstream is read once for both")
     args = parser.parse_args()
     mode = "apply" if args.apply else "write" if args.write else "claims" if args.claims_only else "report"
+    if args.bookkeeping_out and mode != "claims":
+        parser.error("--bookkeeping-out needs --claims-only")
     today = datetime.date.today().isoformat()
     selected = list(args.tools) + [t for t in args.tool_list.split(",") if t.strip()]
     selected = [t.strip() for t in selected]
@@ -249,6 +260,10 @@ def main():
     unknown = sorted(set(selected) - known)
     if unknown:
         parser.error(f"no data file for: {', '.join(unknown)}")
+    bookkeeping = None
+    if args.bookkeeping_out:  # a copy of the data as it was before this run, refreshed below
+        bookkeeping = Path(args.bookkeeping_out) / "data"
+        shutil.copytree(KUBERNETES_FILE.parent, bookkeeping, dirs_exist_ok=True)
 
     def report(name, summary, differences=(), problems=()):
         nonlocal difference_count, problem_count
@@ -266,7 +281,10 @@ def main():
 
     if not selected:
         try:
-            differences = verify_window(mode, today, findings)
+            fetched = kubernetes_window()
+            if bookkeeping:
+                verify_window("write", today, None, fetch=lambda: fetched, path=bookkeeping / KUBERNETES_FILE.name)
+            differences = verify_window(mode, today, findings, fetch=lambda: fetched, path=KUBERNETES_FILE)
             checked.append("kubernetes")
             report("kubernetes", "window differs" if differences else "window matches", differences)
         except UpstreamChanged as exc:
@@ -292,6 +310,10 @@ def main():
             continue
         checked.append(path.stem)
         listed = sum(1 for release in data["releases"] if "delisted" not in release)
+        if bookkeeping:  # the same reading, as --write would apply it; its findings are the same as below
+            refreshed = copy.deepcopy(data["releases"])
+            reconcile(refreshed, copy.deepcopy(upstream), today, "write", path.stem)
+            write_releases(bookkeeping / path.parent.name / path.name, refreshed)
         matching, differences, problems = reconcile(data["releases"], upstream, today, mode, path.stem, findings)
         if mode != "report":
             write_releases(path, data["releases"])
