@@ -163,7 +163,7 @@ Every automated pull request needs every check on its head commit to have passed
 5. Kubernetes has published the new minor's first release: the `kubernetes/kubernetes` GitHub release `v<minor>.0` exists and is not a draft or a pre-release. Until then the pull request waits. This is a second source: the window itself comes from the release schedule data, where `verify.py` counts a minor only once its `releaseDate` has come.
 6. The pull request has been open for at least 2 hours.
 
-When every gate passes, the job squash-merges at the checked head SHA, comments (with a link to the review, or to the Kubernetes release), and deletes the branch. If a gate that needs a maintainer fails (a failed check, gate 4, an edited or invalid review, a `rejected` verdict or missing rows, commits after the review, a fixture), it adds `human-merge` and comments once with the reason. A pull request that is waiting (checks running, no review for this head yet, release not published, under 2 hours old) is left alone. Pull requests opened by people are never merged automatically.
+When every gate passes, the job squash-merges at the checked head SHA, comments (with a link to the review, or to the Kubernetes release), and deletes the branch. If a gate that needs a maintainer fails (a failed check, gate 4, an edited or invalid review, a `rejected` verdict or missing rows, commits after the review, a fixture), it adds `human-merge` and comments once with the reason. A pull request that is waiting (checks running, no review for this head yet, release not published, under 2 hours old) is left alone for up to 24 hours after its head commit. After that it is labelled `human-merge`, with a comment saying what it is still waiting for, so a review that never comes (for example because the Claude token expired) or a check that never finishes doesn't go unnoticed. Pull requests opened by people are never merged automatically.
 
 A claim or window pull request that gate 4 or the window check would refuse is labelled `human-merge` when it is opened, with the reason in its description, so it is not reviewed or merged automatically.
 
@@ -179,7 +179,7 @@ With `AUTOMERGE_DRY_RUN=true`, claim and window pull requests get a "Would merge
 
 **A `needs-human` issue.** Fix the extractor or the data in a pull request, as for any other change. The issue closes itself on the first daily run where the problem is gone.
 
-**A pull request labelled `human-merge`.** Its comment or description gives the reason. For a window pull request, follow the window roll runbook in `CONTRIBUTING.md`. For a removal, check both linked commits: the row is listed at the first and gone at the second.
+**A pull request labelled `human-merge`.** Its comment or description gives the reason. For a window pull request, follow the window roll runbook in `CONTRIBUTING.md`. For a removal, check both linked commits: the row is listed at the first and gone at the second. If the reason is "still waiting after 24 hours", fix what it waits for: re-run the review (`review.yml` with the pull request number) or the check, or renew the token, then remove the label.
 
 **Renew tokens.**
 - `CLAUDE_CODE_OAUTH_TOKEN`: run `claude setup-token` again before the expiry it showed, and replace the secret in the `review` environment.
