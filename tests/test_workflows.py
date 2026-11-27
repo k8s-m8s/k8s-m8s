@@ -16,7 +16,10 @@ PINNED = re.compile(r"[\w.-]+/[\w.-]+@[0-9a-f]{40}")
 # actions any job may use
 ALLOWED = {"actions/checkout", "actions/setup-python", "actions/upload-artifact", "actions/download-artifact",
            "actions/create-github-app-token", "anthropics/claude-code-action",
-           "actions/configure-pages", "actions/upload-pages-artifact", "actions/deploy-pages"}
+           "actions/configure-pages", "actions/upload-pages-artifact", "actions/deploy-pages",
+           "github/codeql-action/init", "github/codeql-action/analyze"}
+# codeql.yml may also upload its results; it holds no secrets and runs no repository code
+PULL_REQUEST_PERMISSIONS = {"codeql.yml": {"contents": "read", "security-events": "write"}}
 # actions a job holding a token or secret may use (rule 4)
 ALLOWED_WITH_SECRETS = {"actions/checkout", "actions/setup-python", "actions/create-github-app-token",
                         "anthropics/claude-code-action", "actions/download-artifact"}
@@ -127,8 +130,19 @@ class WorkflowRulesTest(unittest.TestCase):
             if triggers(workflow) & {"pull_request", "pull_request_target", "push"} and file != "pages.yml":
                 self.assertFalse(holds_secrets(job), f"{file}:{name}")
                 self.assertIsNone(environment(job), f"{file}:{name}")
-                self.assertEqual(job.get("permissions"), {"contents": "read"}, f"{file}:{name}")
+                expected = PULL_REQUEST_PERMISSIONS.get(file, {"contents": "read"})
+                self.assertEqual(job.get("permissions"), expected, f"{file}:{name}")
             self.assertNotIn("pull_request_target", triggers(workflow), file)
+
+    def test_codeql_skips_data_only_pull_requests_and_builds_nothing(self):
+        workflow = load(ROOT / ".github/workflows/codeql.yml")
+        self.assertEqual(workflow["on"]["pull_request"]["paths-ignore"], ["data/**"])
+        self.assertNotIn("paths", workflow["on"]["pull_request"])
+        self.assertFalse({"paths", "paths-ignore"} & set(workflow["on"]["push"]))  # push runs stay complete
+        for job in workflow["jobs"].values():
+            init = next(s for s in job["steps"] if action(s) == "github/codeql-action/init")
+            self.assertEqual(init["with"]["build-mode"], "none")
+            self.assertNotIn("config-file", init["with"])  # no configuration read from the checkout
 
     def test_pages_runs_no_pull_request_code(self):
         workflow = load(ROOT / ".github/workflows/pages.yml")
