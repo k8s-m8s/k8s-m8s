@@ -147,21 +147,26 @@ def source_cell(release):
 
 
 def last_checked(tool):
-    """The date by which every current entry of a tool had last been confirmed against upstream: the oldest
-    `verified` among them (among all entries if none is current)."""
+    """The day a tool's upstream statement was last read in full and its data matched: the newest `verified`
+    among its current entries (among all entries if none is current).
+
+    An entry only gets a `verified` date from a complete, successful read of its tool. Bookkeeping refreshes a
+    tool only when every entry matched, and a claim change carries every difference that read found, so on
+    that day every other current entry matched too.
+    """
     entries = current(tool["releases"]) or tool["releases"]
-    return min(str(r["verified"]) for r in entries)
+    return max(str(r["verified"]) for r in entries)
 
 
 def checked_callout(tool, site_checked=None):
     """The "Upstream last checked" box at the top of a tool page. A warning when the rest of the site is newer."""
     checked = last_checked(tool)
-    newer = any(str(r["verified"]) > checked for r in current(tool["releases"]))
-    text = f"Every current entry on this page was compared with its upstream source on this date{' or later' if newer else ''}."
+    text = "Every current entry on this page was compared with its upstream source on this date."
     if site_checked and checked < site_checked:
         return (f'!!! warning "Upstream last checked on {checked}"\n'
-                f"    {text} The rest of the site was checked on {site_checked}: a change to this tool's upstream "
-                "statement, or a problem reading it, is waiting for review.\n")
+                f"    {text} The rest of the site was checked on {site_checked}. Since then this tool's upstream "
+                "statement changed or could not be read; the next daily check after that is resolved brings it "
+                "up to date.\n")
     return f'!!! info "Upstream last checked on {checked}"\n    {text}\n'
 
 
@@ -239,7 +244,7 @@ def matrix_callout(tools):
         return f'!!! info "Upstream last checked on {checked}"\n    {text}.\n'
     listed = ", ".join(f"[{t['title']}](tools/{t['name']}.md) ({last_checked(t)})" for t in behind)
     return (f'!!! info "Upstream last checked on {checked}"\n'
-            f"    {text}, except for these tools, where a change or a problem is waiting for review "
+            f"    {text}, except for these tools, whose upstream statement changed or could not be read since "
             f"(last checked on the date shown): {listed}.\n")
 
 

@@ -21,8 +21,15 @@ def tool(name="alpha", dates=("2026-12-01", "2026-12-01"), delisted_verified=Non
 
 
 class LastCheckedTest(unittest.TestCase):
-    def test_a_tool_is_as_recent_as_its_oldest_current_entry(self):
-        self.assertEqual(last_checked(tool(dates=("2026-12-01", "2026-11-30"), delisted_verified="2026-01-02")), "2026-11-30")
+    def test_a_tool_is_as_recent_as_its_latest_full_check(self):
+        # a claim change merged on 12-01 dates only the entry it changed; that read checked the others too
+        self.assertEqual(last_checked(tool(dates=("2026-12-01", "2026-11-30"))), "2026-12-01")
+
+    def test_delisted_entries_do_not_count_unless_nothing_is_current(self):
+        self.assertEqual(last_checked(tool(dates=("2026-11-30",), delisted_verified="2026-12-05")), "2026-11-30")
+        gone = tool(dates=("2026-11-30",))
+        gone["releases"][0]["delisted"] = "2026-11-30"
+        self.assertEqual(last_checked(gone), "2026-11-30")
 
     def test_the_site_is_as_recent_as_its_most_recent_tool(self):
         self.assertEqual(site_checked([tool("alpha"), tool("beta", dates=("2026-11-20",))]), "2026-12-01")
@@ -33,15 +40,18 @@ class ToolPageTest(unittest.TestCase):
         page = tool_page(tool(), WINDOW, "2026-12-01")
         self.assertIn('!!! info "Upstream last checked on 2026-12-01"', page)
         self.assertLess(page.index("Upstream last checked"), page.index("Upstream repository"))
-        self.assertNotIn("or later", page)
 
-    def test_entries_checked_on_different_days_say_or_later(self):
-        self.assertIn("on this date or later", tool_page(tool(dates=("2026-12-01", "2026-11-30")), WINDOW, "2026-12-01"))
+    def test_a_merged_claim_change_leaves_no_warning(self):
+        page = tool_page(tool(dates=("2026-12-01", "2026-11-30")), WINDOW, "2026-12-01")
+        self.assertIn('!!! info "Upstream last checked on 2026-12-01"', page)
+        self.assertNotIn("warning", page)
 
     def test_a_tool_behind_the_rest_of_the_site_gets_a_warning(self):
         page = tool_page(tool(dates=("2026-11-28", "2026-11-28")), WINDOW, "2026-12-01")
         self.assertIn('!!! warning "Upstream last checked on 2026-11-28"', page)
         self.assertIn("The rest of the site was checked on 2026-12-01", page)
+        self.assertIn("changed or could not be read", page)
+        self.assertNotIn("waiting for review", page)  # it may have merged already; the page can't know
 
     def test_the_table_has_no_per_row_date(self):
         table = provenance_table(tool()["releases"])
@@ -57,9 +67,12 @@ class MatrixCalloutTest(unittest.TestCase):
         self.assertNotIn("except", callout)
 
     def test_tools_behind_the_newest_date_are_listed_with_their_date(self):
-        callout = matrix_callout([tool("alpha"), tool("beta", dates=("2026-11-20", "2026-11-20"))])
+        tools = [tool("alpha"), tool("beta", dates=("2026-11-20", "2026-11-20")), tool("gamma", dates=("2026-12-01", "2026-11-20"))]
+        callout = matrix_callout(tools)
         self.assertIn("[Beta](tools/beta.md) (2026-11-20)", callout)
+        self.assertIn("changed or could not be read since", callout)
         self.assertNotIn("Alpha", callout)
+        self.assertNotIn("Gamma", callout)  # its newest entry is current
 
 
 if __name__ == "__main__":
