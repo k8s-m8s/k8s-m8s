@@ -37,11 +37,10 @@ Claude checks changes; it doesn't detect them. Detection has to be reproducible,
 |---|---|---|
 | `validate.yml` (Validate data) | `pull_request`, push to `main`, manual | Validation, tests, site build. No secrets, read-only. The only workflow that runs pull request code. |
 | `codeql.yml` (CodeQL) | `pull_request` unless every change is under `data/`, push to `main`, weekly, manual | Code scanning of the Python scripts and the workflows. No secrets; it can read the code and upload results. Builds and runs nothing (build-mode none). |
-| `detect.yml` (Detect upstream changes) | daily 05:43 UTC, manual | Reads every upstream statement (`verify.py --claims-only`). Opens one claim pull request per tool, a window pull request, and `needs-human` issues; closes them when they no longer apply. |
-| `verify.yml` (Weekly bookkeeping) | Mondays 06:17 UTC, manual | Refreshes `verified` and moved `source_commit` values on entries that still match (`verify.py --write`), as one `automated/bookkeeping` pull request. |
+| `detect.yml` (Detect upstream changes) | daily 05:43 UTC, manual | Reads every upstream statement (`verify.py --claims-only`). Opens one claim pull request per tool, a window pull request, and `needs-human` issues; closes them when they no longer apply. Then refreshes `verified` and moved `source_commit` values on entries that still match (`verify.py --write`), as one `automated/bookkeeping` pull request, leaving out tools with a change or problem waiting. |
 | `review.yml` (Review claim changes) | after `validate.yml` on `automated/claim/**`, daily 07:13 UTC, manual | Claude checks each claim change against the upstream file at the recorded commit; `k8s-m8s-reviewer[bot]` posts the verdict. |
 | `automerge.yml` (Merge automated pull requests) | reviewer comments, after `validate.yml` or `review.yml`, every 30 minutes, manual | Checks the merge gates and merges, labels or comments. |
-| `pages.yml` (Deploy site) | push to `main`, after a successful `detect.yml`, manual | Builds and deploys the site, with "Upstream last checked" taken from the latest successful `detect.yml` run. |
+| `pages.yml` (Deploy site) | push to `main`, manual | Builds and deploys the site. "Upstream last checked" comes from the data, so each day's bookkeeping merge deploys that day's date. |
 
 Labels: `claim-change`, `window-change`, `bookkeeping`, `human-merge`, `needs-human`. `publish_findings.py` creates any that are missing.
 
@@ -49,7 +48,7 @@ Labels: `claim-change`, `window-change`, `bookkeeping`, `human-merge`, `needs-hu
 
 | Identity | Kind | Used by | Can do |
 |---|---|---|---|
-| `k8s-m8s-automation[bot]` | GitHub App, installed only on this repository, **no Workflows permission** | The publish steps of `detect.yml` and `verify.yml`, and the act step of `automerge.yml` | Push `automated/*` branches, open pull requests and issues, label, comment, close, merge. The only bypass actor on `main` and `automated/**`. |
+| `k8s-m8s-automation[bot]` | GitHub App, installed only on this repository, **no Workflows permission** | The publish steps of `detect.yml`, and the act step of `automerge.yml` | Push `automated/*` branches, open pull requests and issues, label, comment, close, merge. The only bypass actor on `main` and `automated/**`. |
 | `k8s-m8s-reviewer[bot]` | GitHub App, installed only on this repository | The post step of `review.yml` | Read the repository and comment on pull requests. |
 | Claude | `anthropics/claude-code-action`, authenticated with a Claude Code OAuth token | The review step of `review.yml` | Read files in the job workspace. Returns its verdict as structured output. No GitHub writes. |
 | Maintainers | People | Everything else | Everything except bypassing the `main` and `automated` rulesets. |
@@ -174,7 +173,7 @@ With `AUTOMERGE_DRY_RUN=true`, claim and window pull requests get a "Would merge
 
 ## Routine operations
 
-**Pause all automation.** Set `AUTOMERGE_ENABLED` to `false`, which stops every automated merge. Then disable `review.yml` (and, if needed, `detect.yml` and `verify.yml`) in the Actions tab.
+**Pause all automation.** Set `AUTOMERGE_ENABLED` to `false`, which stops every automated merge. Then disable `review.yml` (and, if needed, `detect.yml`) in the Actions tab.
 
 **Revert a bad merge.** Revert the squash commit through a pull request. If upstream still says the same thing, the next daily run opens the claim pull request again, and it goes through the review again.
 
@@ -199,7 +198,9 @@ Why some parts work the way they do:
 - **`--permission-mode default` is passed explicitly.** Newer versions of the action default to auto mode, where `--allowedTools` is not a strict list.
 - **`allowed_bots` names the automation App.** Agent mode refuses runs started by a bot, and a `workflow_run` after the automation App's push counts as one.
 - **The reviewer token is minted by `create-github-app-token`.** A script can't sign the App's JWT with the standard library alone. So `post_review.py` is split into `render` (no token) and `post`, with the token minted between them.
-- **Claim pull requests are written with `verify.py --claims-only`.** `--apply` refreshes `verified` on every entry, which would make a claim pull request touch the whole file and change every day.
+- **Claim pull requests are written with `verify.py --claims-only`.** `--apply` refreshes `verified` on every entry, which would make a claim pull request touch the whole file and change every day. So `detect.yml` runs `verify.py` twice: once for the claim changes, once (`--write`) for the bookkeeping refresh.
+- **Bookkeeping leaves out tools with a change or problem waiting.** Refreshing a tool's file while its claim pull request is open would conflict with it: the claim pull request would be rebuilt and reviewed again every day, and might never merge. Those tools keep their older date, which the site shows as a warning, until the change merges or the problem is fixed. A failed bookkeeping step never stops the claim changes; that day's dates are just not refreshed.
+- **"Upstream last checked" comes from the data.** Each tool page shows the oldest `verified` date of its current entries, and the matrix shows the newest such date and names any tool that is behind. A local build shows what the site shows, and a day whose check did not complete shows the older date rather than claiming a check that did not happen.
 - **Automated pull requests contain only data files.** The generated pages (`docs/matrix.md`, `docs/tools/`) are not committed.
 - **Findings have one id per entry,** `<tool>/<version>`.
 - **A removal names the commit where the row is gone.** `removed_commit` is the commit at which upstream's statement was read without the row (for a row read from upstream's history, the commit that replaced it). It is evidence for the review, never written to the data. When no commit read that day shows the removal (for example, the whole source file is gone), it is empty and gate 4 leaves the change to a maintainer.

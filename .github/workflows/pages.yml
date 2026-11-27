@@ -1,16 +1,12 @@
 name: Deploy site
 
-# Builds the site with Zensical and publishes it to GitHub Pages. Also runs
-# after each successful daily detect.yml run, so the matrix page shows when
-# upstream was last checked without a daily commit.
+# Builds the site with Zensical and publishes it to GitHub Pages on every push
+# to main. Each day's bookkeeping merge is such a push, so the "Upstream last
+# checked" dates, which come from the data, are deployed daily.
 # Skipped while the repository is private.
 
 on:
   push:
-    branches: [main]
-  workflow_run:
-    workflows: ["Detect upstream changes"]
-    types: [completed]
     branches: [main]
   workflow_dispatch:
 
@@ -22,11 +18,10 @@ concurrency:
 
 jobs:
   deploy:
-    if: ${{ !github.event.repository.private && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success') }}
+    if: ${{ !github.event.repository.private }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      actions: read
       pages: write
       id-token: write
     environment:
@@ -41,13 +36,6 @@ jobs:
           python-version: "3.13"
       - run: pip install -r requirements.txt -r requirements-site.txt
       - run: python scripts/validate.py --strict
-      - name: Find when upstream was last checked
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          checked=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/detect.yml/runs?branch=main&status=success&per_page=1" \
-            --jq '.workflow_runs[0].updated_at // empty' 2>/dev/null || true)
-          echo "UPSTREAM_CHECKED=${checked%%T*}" >> "$GITHUB_ENV"
       - run: python scripts/generate.py
       - run: zensical build
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0

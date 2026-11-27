@@ -3,15 +3,18 @@
 import io
 import os
 import sys
+import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
 from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import findings as block  # noqa: E402
 import publish_findings as publish  # noqa: E402
+from helpers import releases, tool_text  # noqa: E402
 
 BOT = {"login": "k8s-m8s-automation[bot]", "type": "Bot"}
 ENV = {"GITHUB_REPOSITORY": "k8s-m8s/k8s-m8s", "AUTOMATION_LOGIN": BOT["login"]}
@@ -143,6 +146,50 @@ class ClaimPullTest(unittest.TestCase):
     def test_only_data_files_are_committed(self):
         with self.assertRaises(SystemExit):
             publish.commit_files("b" * 40, {".github/workflows/x.yml": "x"}, "m")
+
+
+class BookkeepingPullTest(unittest.TestCase):
+    TOOLS = ("rook", "velero")
+
+    def run_bookkeeping(self, findings=(), open_pulls=()):
+        """Main has every tool verified 2026-11-01; the refreshed copy has 2026-12-01."""
+        refreshed = [{**r, "verified": "2026-12-01"} for r in releases()]
+        with tempfile.TemporaryDirectory() as tmp:
+            root, out = Path(tmp) / "root", Path(tmp) / "out"
+            for base, items in ((root, releases()), (out, refreshed)):
+                for tool in self.TOOLS:
+                    path = base / "data" / "tools" / f"{tool}.yaml"
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_text(tool_text(items).replace("demo", tool), encoding="utf-8")
+            report = {"date": "2026-12-01", "findings": list(findings)}
+            with mock.patch.dict(os.environ, ENV), mock.patch.object(publish, "ROOT", root), \
+                    mock.patch.object(publish.ghapi, "paged", return_value=list(open_pulls)), \
+                    mock.patch.object(publish, "upsert_pull") as upsert, \
+                    redirect_stdout(io.StringIO()):
+                publish.publish_bookkeeping(report, str(out), "b" * 40)
+        return upsert
+
+    def files(self, upsert):
+        return sorted(upsert.call_args.args[6])
+
+    def test_every_refreshed_tool_is_in_the_pull_request(self):
+        upsert = self.run_bookkeeping()
+        self.assertEqual(self.files(upsert), ["data/tools/rook.yaml", "data/tools/velero.yaml"])
+        self.assertIn("Opened by `detect.yml`", upsert.call_args.args[2])
+
+    def test_tools_with_a_change_or_problem_waiting_are_left_out(self):
+        upsert = self.run_bookkeeping(findings=[claim("velero")])
+        self.assertEqual(self.files(upsert), ["data/tools/rook.yaml"])
+        self.assertIn("Left out until their change or problem is resolved: velero", upsert.call_args.args[2])
+        upsert = self.run_bookkeeping(findings=[needs_human("velero")])
+        self.assertEqual(self.files(upsert), ["data/tools/rook.yaml"])
+
+    def test_tools_with_an_open_claim_pull_request_are_left_out(self):
+        pulls = [{"head": {"ref": "automated/claim/rook"}}, {"head": {"ref": "automated/bookkeeping"}}]
+        self.assertEqual(self.files(self.run_bookkeeping(open_pulls=pulls)), ["data/tools/velero.yaml"])
+
+    def test_nothing_left_to_refresh_opens_nothing(self):
+        self.run_bookkeeping(findings=[claim("velero"), claim("rook")]).assert_not_called()
 
 
 if __name__ == "__main__":

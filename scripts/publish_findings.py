@@ -26,7 +26,10 @@ detect:
   - automated/claim/* and automated/window branches without an open pull
     request (one closed by hand) are deleted.
 bookkeeping: one pull request from automated/bookkeeping with every changed
-  data file, after check_diff.py's bookkeeping check passes on them.
+  data file, after check_diff.py's bookkeeping check passes on them. Tools
+  with a claim change or a problem waiting (in the report, or in an open claim
+  pull request) are left out: refreshing their file would conflict with that
+  pull request, and their older date shows on the site until it is resolved.
 """
 
 import argparse
@@ -301,10 +304,24 @@ def publish_issues(report):
             print(f"issue #{issue['number']} closed: {title}")
 
 
+def waiting_tools(report):
+    """Tools with a claim change or a problem waiting: in the report, or in an open claim pull request."""
+    tools = {f["tool"] for f in report["findings"] if f["class"] in ("claim", "needs-human")}
+    for pull in ghapi.paged(f"repos/{ghapi.repo()}/pulls", state="open"):
+        if pull["head"]["ref"].startswith("automated/claim/"):
+            tools.add(pull["head"]["ref"].removeprefix("automated/claim/"))
+    return tools
+
+
 def publish_bookkeeping(report, data_dir, base):
-    files = {}
+    waiting = waiting_tools(report)
+    files, left_out = {}, []
     for file in sorted((Path(data_dir) / "data").rglob("*.yaml")):
         path = file.relative_to(data_dir).as_posix()
+        tool = TOOL_FILE.fullmatch(path)
+        if tool and tool.group(1) in waiting:
+            left_out.append(tool.group(1))
+            continue
         before = (ROOT / path).read_text(encoding="utf-8") if (ROOT / path).is_file() else None
         text = file.read_text(encoding="utf-8")
         if before != text:
@@ -316,15 +333,16 @@ def publish_bookkeeping(report, data_dir, base):
                                  lambda p: files.get(p), sorted(files))
     if problems:
         raise SystemExit("bookkeeping changes failed the check:\n" + "\n".join(problems))
-    moved = [f for f in report["findings"] if f["class"] == "bookkeeping"]
+    moved = [f for f in report["findings"] if f["class"] == "bookkeeping" and f["tool"] not in waiting]
     body = (
-        "Opened by `verify.yml`: every entry that still matches upstream gets today's `verified` date, "
+        "Opened by `detect.yml`: every entry that still matches upstream gets today's `verified` date, "
         "and `source_commit` where upstream edited the file without changing the claim.\n\n"
         f"{len(files)} file(s) changed, {len(moved)} source commit(s) moved. "
-        "`automerge.yml` merges this after `scripts/check_diff.py bookkeeping` passes on the pull request.\n"
+        + (f"Left out until their change or problem is resolved: {', '.join(left_out)}. " if left_out else "")
+        + "`automerge.yml` merges this after `scripts/check_diff.py bookkeeping` passes on the pull request.\n"
     )
     upsert_pull("automated/bookkeeping", f"Bookkeeping: verified {report['date']}", body, ["bookkeeping"], True,
-                base, files, f"Refresh verified dates ({report['date']})\n\nOpened by verify.yml.")
+                base, files, f"Refresh verified dates ({report['date']})\n\nOpened by detect.yml.")
 
 
 def stale_branches():
