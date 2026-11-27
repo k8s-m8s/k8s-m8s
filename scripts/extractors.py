@@ -253,24 +253,30 @@ def longhorn():
 
 @extractor("cloudnative-pg")
 def cloudnative_pg():
-    """Both release tables' "Supported Kubernetes versions" column. The current table's
-    "Tested, but not supported" column is left out (see the tool's notes)."""
     repo, path = "cloudnative-pg/cloudnative-pg", "docs/src/supported_releases.md"
     sha = commit_sha(repo)
-    text = read(repo, sha, path)
-    wording = "Supported Kubernetes versions"
-    commit = file_commit(repo, sha, path)
+    return cloudnative_pg_rows(read(repo, sha, path), repo, path, file_commit(repo, sha, path))
+
+
+def cloudnative_pg_rows(text, repo, path, commit):
+    """Both release tables' "Supported Kubernetes versions" column. The current table's
+    "Tested, but not supported" column is left out, and so are its release candidates,
+    which its "Currently supported" column marks as a preview (see the tool's notes)."""
+    wording, status = "Supported Kubernetes versions", "Currently supported"
     releases, header, tables = [], None, 0
     for row in table_rows(text):
         if row[0] == "Version":
             header = row if wording in row else None
             tables += header is not None
+            need(header is None or tables > 1 or status in header, f"no '{status}' column in the current table")
             continue
         if not header or set(row[0]) <= set("-"):
             continue
         need(len(row) == len(header), f"unexpected row {row[:2]}")
         if row[0] == "main":
             continue  # development branch, no release
+        if status in header and re.search(r"\b(preview|RC)\b", row[header.index(status)], re.I):
+            continue  # release candidate, not released yet
         version = re.fullmatch(r"(\d+\.\d+)\.x", row[0])
         minors_listed = [m.strip() for m in row[header.index(wording)].split(",")]
         need(version and all(re.fullmatch(r"1\.\d+", m) for m in minors_listed), f"unexpected row {row[:2]}")
