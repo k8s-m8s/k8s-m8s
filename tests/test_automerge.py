@@ -230,6 +230,35 @@ class GateTest(unittest.TestCase):
         self.assertEqual(self.kinds(actions), ["label"])
         self.assertEqual(self.decide(pull(ref="automated/bookkeeping"), checks=[check(status="queued", conclusion=None)]), [])
 
+    def test_a_claim_still_waiting_after_a_day_is_labelled(self):
+        actions = self.decide(pull(), [], committed_hours_ago=25)  # no review for this head
+        self.assertEqual(self.kinds(actions), ["label", "comment"])
+        self.assertIn("still waiting after 24 hours: no review yet", actions[1]["comment"])
+        running = [check(), check("Analyze (python)", status="in_progress", conclusion=None, cid=2)]
+        self.assertIn("still waiting", self.decide(pull(), [review()], checks=running, committed_hours_ago=25)[1]["comment"])
+
+    def test_a_day_old_wait_is_reported_once(self):
+        actions = self.decide(pull(), [], committed_hours_ago=25)
+        posted = {"id": 11, "created_at": stamp(0.1), "user": {"login": AUTOMATION, "type": "Bot"}, "body": actions[1]["comment"]}
+        self.assertEqual(self.kinds(self.decide(pull(labels=[{"name": "human-merge"}]), [posted], committed_hours_ago=26)), [])
+
+    def test_a_younger_wait_stays_quiet(self):
+        self.assertEqual(self.decide(pull(), [], committed_hours_ago=23), [])
+
+    def test_a_labelled_pull_request_is_not_escalated(self):
+        self.assertEqual(self.decide(pull(labels=[{"name": "human-merge"}]), [], committed_hours_ago=48), [])
+
+    def test_a_window_roll_waiting_a_day_for_its_release_is_labelled(self):
+        actions = self.decide(pull(ref="automated/window"), release=None, committed_hours_ago=25)
+        self.assertEqual(self.kinds(actions), ["label", "comment"])
+        self.assertIn("not published yet", actions[1]["comment"])
+
+    def test_bookkeeping_stuck_for_a_day_is_labelled(self):
+        queued = [check(status="queued", conclusion=None)]
+        actions = self.decide(pull(ref="automated/bookkeeping"), checks=queued, committed_hours_ago=25)
+        self.assertEqual(self.kinds(actions), ["label"])
+        self.assertIn("still waiting after 24 hours", actions[0]["comment"])
+
     def test_disabled_does_nothing(self):
         with mock.patch.dict(os.environ, {**ENV, "AUTOMERGE_ENABLED": "false"}), \
                 mock.patch.object(sys, "argv", ["automerge.py", "decide", "--out", os.devnull]), \
