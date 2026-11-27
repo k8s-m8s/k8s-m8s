@@ -1,11 +1,12 @@
 name: Detect upstream changes
 
-# Daily: re-read every upstream statement. The detect job has no secrets and
-# a read-only token; it writes the report and the changed data files to an
-# artifact, twice: the claim changes (verify.py --claims-only) and the
-# bookkeeping refresh of entries that still match (verify.py --write). The
-# publish job runs only if something needs publishing (or an open pull
-# request or issue may need closing). It commits nothing from a pull request
+# Daily: re-read every upstream statement, once. The detect job has no
+# secrets and a read-only token; from that one reading it writes the report
+# and two sets of data files to an artifact: the claim changes
+# (verify.py --claims-only) and the bookkeeping refresh of entries that still
+# match (--bookkeeping-out, what --write would write). The publish job runs
+# only if something needs publishing (or an open pull request or issue may
+# need closing). It commits nothing from a pull request
 # and mints the automation App's token in the step that uses it, once for the
 # claim changes and once for the bookkeeping pull request, so a failure in one
 # does not stop the other. See docs/maintainers/automation.md.
@@ -57,10 +58,11 @@ jobs:
           FIXTURE_KIND: ${{ inputs.fixture_kind }}
         run: |
           mkdir -p "$RUNNER_TEMP/out"
+          cp -R data "$RUNNER_TEMP/main-data"
           if [ -n "$FIXTURE" ]; then
             python scripts/test_fixture.py --tool "$FIXTURE" --kind "${FIXTURE_KIND:-claim}" --report-json "$RUNNER_TEMP/out/report.json"
           else
-            python scripts/verify.py --claims-only --report-json "$RUNNER_TEMP/out/report.json"
+            python scripts/verify.py --claims-only --bookkeeping-out "$RUNNER_TEMP/out/bookkeeping" --report-json "$RUNNER_TEMP/out/report.json"
           fi
           cp -R data "$RUNNER_TEMP/out/data"
           echo "$GITHUB_SHA" > "$RUNNER_TEMP/out/base"
@@ -73,18 +75,18 @@ jobs:
 
       # Not on fixture runs. A failure here leaves the day's dates unrefreshed
       # (the site then shows the older date) but never stops the claim changes.
-      - name: Refresh entries that still match upstream (bookkeeping)
+      - name: Check whether the bookkeeping refresh changed anything
         id: bookkeeping
         if: ${{ !inputs.fixture }}
         continue-on-error: true
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
         run: |
-          git checkout -- data
-          mkdir -p "$RUNNER_TEMP/out/bookkeeping"
-          python scripts/verify.py --write --report-json "$RUNNER_TEMP/out/bookkeeping/report.json"
-          cp -R data "$RUNNER_TEMP/out/bookkeeping/data"
-          if git diff --quiet -- data; then echo "changed=false" >> "$GITHUB_OUTPUT"; else echo "changed=true" >> "$GITHUB_OUTPUT"; fi
+          status=0
+          diff -rq "$RUNNER_TEMP/main-data" "$RUNNER_TEMP/out/bookkeeping/data" > /dev/null || status=$?
+          case "$status" in
+            0) echo "changed=false" >> "$GITHUB_OUTPUT" ;;
+            1) echo "changed=true" >> "$GITHUB_OUTPUT" ;;
+            *) echo "::warning::no bookkeeping output to compare"; echo "changed=false" >> "$GITHUB_OUTPUT" ;;
+          esac
 
       - if: steps.pending.outputs.publish == 'true' || steps.bookkeeping.outputs.changed == 'true'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -149,6 +151,6 @@ jobs:
           AUTOMATION_LOGIN: ${{ vars.AUTOMATION_LOGIN }}
         run: >-
           python scripts/publish_findings.py bookkeeping
-          --report "$RUNNER_TEMP/out/bookkeeping/report.json"
+          --report "$RUNNER_TEMP/out/report.json"
           --data-dir "$RUNNER_TEMP/out/bookkeeping"
           --base "$(cat "$RUNNER_TEMP/out/base")"
