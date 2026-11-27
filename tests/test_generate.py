@@ -31,9 +31,6 @@ class LastCheckedTest(unittest.TestCase):
         gone["releases"][0]["delisted"] = "2026-11-30"
         self.assertEqual(last_checked(gone), "2026-11-30")
 
-    def test_the_site_is_as_recent_as_its_most_recent_tool(self):
-        self.assertEqual(site_checked([tool("alpha"), tool("beta", dates=("2026-11-20",))]), "2026-12-01")
-
 
 class ToolPageTest(unittest.TestCase):
     def test_the_page_opens_with_the_date(self):
@@ -49,7 +46,7 @@ class ToolPageTest(unittest.TestCase):
     def test_a_tool_behind_the_rest_of_the_site_gets_a_warning(self):
         page = tool_page(tool(dates=("2026-11-28", "2026-11-28")), WINDOW, "2026-12-01")
         self.assertIn('!!! warning "Upstream last checked on 2026-11-28"', page)
-        self.assertIn("The rest of the site was checked on 2026-12-01", page)
+        self.assertIn("Most of the site was checked on 2026-12-01. Since 2026-11-28,", page)
         self.assertIn("changed or could not be read", page)
         self.assertNotIn("waiting for review", page)  # it may have merged already; the page can't know
 
@@ -59,20 +56,44 @@ class ToolPageTest(unittest.TestCase):
         self.assertNotIn("2026-12-01", table)
 
 
-class MatrixCalloutTest(unittest.TestCase):
-    def test_every_tool_on_the_newest_date(self):
-        callout = matrix_callout([tool("alpha"), tool("beta")])
-        self.assertTrue(callout.startswith('!!! info "Upstream last checked on 2026-12-01"'))
-        self.assertIn("2 tools.", callout)
-        self.assertNotIn("except", callout)
+class SiteCheckedTest(unittest.TestCase):
+    def test_the_site_date_is_the_one_most_tools_share(self):
+        tools = [tool("a", ("2026-11-23",)), tool("b", ("2026-11-23",)), tool("c", ("2026-11-25",)), tool("d", ("2026-11-26",))]
+        self.assertEqual(site_checked(tools), "2026-11-23")
 
-    def test_tools_behind_the_newest_date_are_listed_with_their_date(self):
-        tools = [tool("alpha"), tool("beta", dates=("2026-11-20", "2026-11-20")), tool("gamma", dates=("2026-12-01", "2026-11-20"))]
+    def test_ties_go_to_the_newer_date(self):
+        self.assertEqual(site_checked([tool("a", ("2026-11-23",)), tool("b", ("2026-11-24",))]), "2026-11-24")
+
+
+class MatrixCalloutTest(unittest.TestCase):
+    def test_every_tool_on_the_same_date(self):
+        callout = matrix_callout([tool("alpha"), tool("beta")])
+        self.assertEqual(callout, '!!! info "Upstream last checked on 2026-12-01"\n'
+                                  "    2 tools. Every current entry was compared with its upstream source on this date.\n")
+
+    def test_a_claim_merged_on_a_day_without_bookkeeping_makes_no_tool_look_behind(self):
+        # bookkeeping last merged on 11-30; one tool's claim change merged on 12-01
+        tools = [tool("alpha", ("2026-11-30",)), tool("beta", ("2026-11-30",)), tool("gamma", ("2026-12-01", "2026-11-30"))]
         callout = matrix_callout(tools)
-        self.assertIn("[Beta](tools/beta.md) (2026-11-20)", callout)
-        self.assertIn("changed or could not be read since", callout)
+        self.assertIn("Upstream last checked on 2026-11-30", callout)
+        self.assertIn("on this date or later.", callout)
+        self.assertNotIn("except", callout)
+        self.assertNotIn("warning", tool_page(tools[0], WINDOW, site_checked(tools)))
+
+    def test_a_tool_behind_is_named_with_its_date(self):
+        tools = [tool("alpha"), tool("beta", ("2026-11-20", "2026-11-20")), tool("gamma", ("2026-12-01", "2026-11-20"))]
+        callout = matrix_callout(tools)
+        self.assertIn("except for [Beta](tools/beta.md) (last checked 2026-11-20): the upstream statement changed", callout)
         self.assertNotIn("Alpha", callout)
         self.assertNotIn("Gamma", callout)  # its newest entry is current
+
+    def test_many_tools_behind_are_counted_not_listed(self):
+        tools = [tool(f"t{n}") for n in range(6)] + [tool(f"old{n}", ("2026-11-20",)) for n in range(4)]
+        callout = matrix_callout(tools)
+        self.assertIn("Every current entry of 6 of them was compared", callout)
+        self.assertIn("For the other 4,", callout)
+        self.assertNotIn("Old0", callout)
+        self.assertEqual(callout.count("\n"), 2)  # still a title and one paragraph
 
 
 if __name__ == "__main__":

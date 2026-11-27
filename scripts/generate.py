@@ -14,6 +14,7 @@ import json
 import re
 import shutil
 import sys
+from collections import Counter
 
 from common import (
     ROOT,
@@ -164,7 +165,7 @@ def checked_callout(tool, site_checked=None):
     text = "Every current entry on this page was compared with its upstream source on this date."
     if site_checked and checked < site_checked:
         return (f'!!! warning "Upstream last checked on {checked}"\n'
-                f"    {text} The rest of the site was checked on {site_checked}. Since then this tool's upstream "
+                f"    {text} Most of the site was checked on {site_checked}. Since {checked}, this tool's upstream "
                 "statement changed or could not be read; the next daily check after that is resolved brings it "
                 "up to date.\n")
     return f'!!! info "Upstream last checked on {checked}"\n    {text}\n'
@@ -232,20 +233,36 @@ def jump_list(by_category):
 
 
 def site_checked(tools):
-    """The most recent "Upstream last checked" date of any tool: the day of the latest daily check."""
-    return max(last_checked(tool) for tool in tools)
+    """The day most tools were last checked: the latest daily check that completed for the site.
+
+    Not the newest date of any tool: a claim change merged on a day whose bookkeeping did not merge dates
+    only its own tool, and must not make every other tool look behind. Ties go to the newer date.
+    """
+    counts = Counter(last_checked(tool) for tool in tools)
+    return max(counts, key=lambda date: (counts[date], date))
+
+
+MAX_NAMED = 3  # tools behind the site's date that the matrix callout names; more are only counted
 
 
 def matrix_callout(tools):
+    """The "Upstream last checked" box on the matrix page: one short sentence, naming at most MAX_NAMED tools
+    that are behind (a change or a problem waiting), so it stays short even on a bad day."""
     checked = site_checked(tools)
     behind = sorted((t for t in tools if last_checked(t) < checked), key=lambda t: t["title"].lower())
-    text = f"{len(tools)} tools. Every current entry was compared with its upstream source on this date"
+    ahead = any(last_checked(t) > checked for t in tools)
+    when = f"on this date{' or later' if ahead else ''}"
+    title = f'!!! info "Upstream last checked on {checked}"\n'
     if not behind:
-        return f'!!! info "Upstream last checked on {checked}"\n    {text}.\n'
-    listed = ", ".join(f"[{t['title']}](tools/{t['name']}.md) ({last_checked(t)})" for t in behind)
-    return (f'!!! info "Upstream last checked on {checked}"\n'
-            f"    {text}, except for these tools, whose upstream statement changed or could not be read since "
-            f"(last checked on the date shown): {listed}.\n")
+        return title + f"    {len(tools)} tools. Every current entry was compared with its upstream source {when}.\n"
+    if len(behind) > MAX_NAMED:
+        return title + (f"    {len(tools)} tools. Every current entry of {len(tools) - len(behind)} of them was compared "
+                        f"with its upstream source {when}. For the other {len(behind)}, whose upstream statement "
+                        "changed or could not be read since, each tool's page shows when it was last checked.\n")
+    names = [f"[{t['title']}](tools/{t['name']}.md) (last checked {last_checked(t)})" for t in behind]
+    listed = names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1]
+    return title + (f"    {len(tools)} tools. Every current entry was compared with its upstream source {when}, "
+                    f"except for {listed}: the upstream statement changed or could not be read since.\n")
 
 
 def matrix_page(tools, window):
