@@ -8,7 +8,9 @@ notes: >-
   the Kubernetes minors it supports, for current and older releases alike.
   For the current release upstream also lists Kubernetes versions as "tested,
   but not supported". Those are not recorded: recording them as tested would
-  rank them above supported, which upstream does not mean.
+  rank them above supported, which upstream does not mean. A release line the
+  table marks as a preview (a release candidate, with no support) is not
+  recorded until upstream marks it as released.
 releases:
   - version: "1.30"
     stated:
