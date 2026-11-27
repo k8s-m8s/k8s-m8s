@@ -146,7 +146,7 @@ class WorkflowRulesTest(unittest.TestCase):
 
     def test_pages_runs_no_pull_request_code(self):
         workflow = load(ROOT / ".github/workflows/pages.yml")
-        self.assertEqual(triggers(workflow), {"push", "workflow_run", "workflow_dispatch"})
+        self.assertEqual(triggers(workflow), {"push", "workflow_dispatch"})
         self.assertEqual(workflow["on"]["push"], {"branches": ["main"]})
 
 

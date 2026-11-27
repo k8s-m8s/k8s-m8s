@@ -1,11 +1,14 @@
 name: Detect upstream changes
 
 # Daily: re-read every upstream statement. The detect job has no secrets and
-# a read-only token; it writes the report and any changed data files to an
-# artifact. The publish job runs only if something needs publishing (or an
-# open pull request or issue may need closing). It commits nothing from a
-# pull request and mints the automation App's token in the step that uses it.
-# See docs/maintainers/automation.md.
+# a read-only token; it writes the report and the changed data files to an
+# artifact, twice: the claim changes (verify.py --claims-only) and the
+# bookkeeping refresh of entries that still match (verify.py --write). The
+# publish job runs only if something needs publishing (or an open pull
+# request or issue may need closing). It commits nothing from a pull request
+# and mints the automation App's token in the step that uses it, once for the
+# claim changes and once for the bookkeeping pull request, so a failure in one
+# does not stop the other. See docs/maintainers/automation.md.
 
 on:
   schedule:
@@ -37,6 +40,7 @@ jobs:
       pull-requests: read
     outputs:
       publish: ${{ steps.pending.outputs.publish }}
+      bookkeeping: ${{ steps.bookkeeping.outputs.changed }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -67,7 +71,22 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: echo "publish=$(python scripts/publish_findings.py pending --report "$RUNNER_TEMP/out/report.json")" >> "$GITHUB_OUTPUT"
 
-      - if: steps.pending.outputs.publish == 'true'
+      # Not on fixture runs. A failure here leaves the day's dates unrefreshed
+      # (the site then shows the older date) but never stops the claim changes.
+      - name: Refresh entries that still match upstream (bookkeeping)
+        id: bookkeeping
+        if: ${{ !inputs.fixture }}
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          git checkout -- data
+          mkdir -p "$RUNNER_TEMP/out/bookkeeping"
+          python scripts/verify.py --write --report-json "$RUNNER_TEMP/out/bookkeeping/report.json"
+          cp -R data "$RUNNER_TEMP/out/bookkeeping/data"
+          if git diff --quiet -- data; then echo "changed=false" >> "$GITHUB_OUTPUT"; else echo "changed=true" >> "$GITHUB_OUTPUT"; fi
+
+      - if: steps.pending.outputs.publish == 'true' || steps.bookkeeping.outputs.changed == 'true'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: findings
@@ -76,7 +95,7 @@ jobs:
 
   publish:
     needs: detect
-    if: needs.detect.outputs.publish == 'true'
+    if: needs.detect.outputs.publish == 'true' || needs.detect.outputs.bookkeeping == 'true'
     runs-on: ubuntu-latest
     environment: automation
     permissions:
@@ -95,6 +114,7 @@ jobs:
           path: ${{ runner.temp }}/out
 
       - id: app
+        if: needs.detect.outputs.publish == 'true'
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
           app-id: ${{ vars.AUTOMATION_APP_ID }}
@@ -103,6 +123,7 @@ jobs:
           permission-pull-requests: write
           permission-issues: write
       - name: Open or update pull requests and issues
+        if: needs.detect.outputs.publish == 'true'
         env:
           GH_TOKEN: ${{ steps.app.outputs.token }}
           AUTOMATION_LOGIN: ${{ vars.AUTOMATION_LOGIN }}
@@ -110,4 +131,24 @@ jobs:
           python scripts/publish_findings.py detect
           --report "$RUNNER_TEMP/out/report.json"
           --data-dir "$RUNNER_TEMP/out"
+          --base "$(cat "$RUNNER_TEMP/out/base")"
+
+      - id: bookkeeping_app
+        if: ${{ !cancelled() && needs.detect.outputs.bookkeeping == 'true' }}
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          app-id: ${{ vars.AUTOMATION_APP_ID }}
+          private-key: ${{ secrets.AUTOMATION_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+          permission-issues: write
+      - name: Open or update the bookkeeping pull request
+        if: ${{ !cancelled() && needs.detect.outputs.bookkeeping == 'true' }}
+        env:
+          GH_TOKEN: ${{ steps.bookkeeping_app.outputs.token }}
+          AUTOMATION_LOGIN: ${{ vars.AUTOMATION_LOGIN }}
+        run: >-
+          python scripts/publish_findings.py bookkeeping
+          --report "$RUNNER_TEMP/out/bookkeeping/report.json"
+          --data-dir "$RUNNER_TEMP/out/bookkeeping"
           --base "$(cat "$RUNNER_TEMP/out/base")"

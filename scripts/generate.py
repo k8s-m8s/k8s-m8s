@@ -4,10 +4,13 @@
 Writes docs/matrix.md, docs/tools/<tool>.md and a copy of the schema under
 docs/schema/. These files are build output: do not edit them by hand. Also refreshes the generated navigation block in
 zensical.toml so every tool page is listed.
+
+"Upstream last checked" dates come from the data alone (each entry's
+`verified`, refreshed daily by detect.yml), so a local build shows what the
+site shows.
 """
 
 import json
-import os
 import re
 import shutil
 import sys
@@ -110,7 +113,6 @@ def provenance_table(releases):
     if any(r.get("unsupported") for r in releases):
         columns.append(("Stated unsupported", format_unsupported))
     columns.append(("Source", source_cell))
-    columns.append(("Verified", lambda r: date_cell(r["verified"])))
     lines = [
         "| " + " | ".join(title for title, _ in columns) + " |",
         "|" + "---|" * len(columns),
@@ -144,10 +146,30 @@ def source_cell(release):
     return f"[upstream at {commit[:7]}]({source})"
 
 
-def tool_page(tool, window):
+def last_checked(tool):
+    """The date by which every current entry of a tool had last been confirmed against upstream: the oldest
+    `verified` among them (among all entries if none is current)."""
+    entries = current(tool["releases"]) or tool["releases"]
+    return min(str(r["verified"]) for r in entries)
+
+
+def checked_callout(tool, site_checked=None):
+    """The "Upstream last checked" box at the top of a tool page. A warning when the rest of the site is newer."""
+    checked = last_checked(tool)
+    newer = any(str(r["verified"]) > checked for r in current(tool["releases"]))
+    text = f"Every current entry on this page was compared with its upstream source on this date{' or later' if newer else ''}."
+    if site_checked and checked < site_checked:
+        return (f'!!! warning "Upstream last checked on {checked}"\n'
+                f"    {text} The rest of the site was checked on {site_checked}: a change to this tool's upstream "
+                "statement, or a problem reading it, is waiting for review.\n")
+    return f'!!! info "Upstream last checked on {checked}"\n    {text}\n'
+
+
+def tool_page(tool, window, site_checked=None):
     description = (f"Which {tool['title']} versions work with Kubernetes {window_text(window)}, "
                    "as stated by its maintainers, with links to the upstream source.")
     parts = [front_matter(description) + HEADER, f"# {tool['title']}\n"]
+    parts.append(checked_callout(tool, site_checked))
     parts.append(f"Upstream repository: <{tool['repo']}>\n")
     if tool.get("notes"):
         parts.append(tool["notes"].strip() + "\n")
@@ -204,6 +226,23 @@ def jump_list(by_category):
     return "\n\n".join(lines) + "\n"
 
 
+def site_checked(tools):
+    """The most recent "Upstream last checked" date of any tool: the day of the latest daily check."""
+    return max(last_checked(tool) for tool in tools)
+
+
+def matrix_callout(tools):
+    checked = site_checked(tools)
+    behind = sorted((t for t in tools if last_checked(t) < checked), key=lambda t: t["title"].lower())
+    text = f"{len(tools)} tools. Every current entry was compared with its upstream source on this date"
+    if not behind:
+        return f'!!! info "Upstream last checked on {checked}"\n    {text}.\n'
+    listed = ", ".join(f"[{t['title']}](tools/{t['name']}.md) ({last_checked(t)})" for t in behind)
+    return (f'!!! info "Upstream last checked on {checked}"\n'
+            f"    {text}, except for these tools, where a change or a problem is waiting for review "
+            f"(last checked on the date shown): {listed}.\n")
+
+
 def matrix_page(tools, window):
     description = (f"Compatibility of {len(tools)} Kubernetes tools with Kubernetes {window_text(window)}, "
                    "with every claim linked to its upstream source.")
@@ -213,12 +252,7 @@ def matrix_page(tools, window):
         "Kubernetes " + ", ".join(window) + ". "
         "See [how to read this](how-to-read.md) for what each level means.\n"
     )
-    oldest = min(r["verified"] for tool in tools for r in tool["releases"])
-    checked = os.environ.get("UPSTREAM_CHECKED", "").strip()
-    if re.fullmatch(r"\d{4}-\d{2}-\d{2}", checked):  # set by pages.yml from the latest successful daily detect.yml run
-        parts.append(f"{len(tools)} tools. Upstream last checked on {checked}.\n")
-    else:  # local builds: no detect run to refer to
-        parts.append(f"{len(tools)} tools. Every entry was last checked against its upstream source on or after {oldest}.\n")
+    parts.append(matrix_callout(tools))
     parts.append(
         "Only tool versions with an upstream statement covering these Kubernetes versions "
         "are listed here. Each tool's page has every recorded version.\n"
@@ -273,8 +307,9 @@ def main():
     for stale in tools_dir.glob("*.md"):
         stale.unlink()
 
+    checked = site_checked(tools)
     for tool in tools:
-        (tools_dir / f"{tool['name']}.md").write_text(tool_page(tool, window), encoding="utf-8")
+        (tools_dir / f"{tool['name']}.md").write_text(tool_page(tool, window, checked), encoding="utf-8")
     (DOCS / "matrix.md").write_text(matrix_page(tools, window), encoding="utf-8")
 
     write_nav(tools)

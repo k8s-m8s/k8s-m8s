@@ -47,7 +47,7 @@ zensical serve
 
 ## How the data stays current
 
-Every day a workflow re-reads each tool's upstream statement. When a claim changes, it opens a pull request for that tool, listing old and new values with links to the source at the commit it was read from. An automated review checks each change, including rows upstream has removed, against that upstream file before it can merge. A new Kubernetes minor joins the matrix once Kubernetes has published its release. Maintainers review anything the review or the checks flag. A weekly workflow refreshes the verification dates. [docs/maintainers/automation.md](docs/maintainers/automation.md) has the details.
+Every day a workflow re-reads each tool's upstream statement. When a claim changes, it opens a pull request for that tool, listing old and new values with links to the source at the commit it was read from. An automated review checks each change, including rows upstream has removed, against that upstream file before it can merge. A new Kubernetes minor joins the matrix once Kubernetes has published its release. Maintainers review anything the review or the checks flag. The same daily run refreshes the verification date of every entry that still matches upstream, and each page on the site shows when upstream was last checked. [docs/maintainers/automation.md](docs/maintainers/automation.md) has the details.
 
 ## Corrections
 
