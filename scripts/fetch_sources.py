@@ -12,9 +12,15 @@ source_commit and saved as upstream/<tool>/<commit>/<path>:
     https://github.com/O/R#<anchor>            the README GitHub shows there (README.md) at the commit
     https://github.com/O/R/releases/tag/<tag>  the release notes, if the tag points at the commit
 
+A removal (a finding whose entry becomes delisted) is also fetched at its
+removed_commit, the upstream commit where the row is gone, and that commit's
+date is recorded, so the reviewer can confirm the row is no longer listed.
+
 Only raw.githubusercontent.com and api.github.com are contacted. Files over
 2 MB are skipped. upstream/index.json maps each finding id to its file, or
-to the reason it is missing; the reviewer marks missing sources `ambiguous`.
+to the reason it is missing (and, for a removal, to removed_file and
+removed_date, or removed_missing); the reviewer marks missing sources
+`ambiguous`.
 """
 
 import argparse
@@ -99,6 +105,26 @@ def fetch(item, allowed, out):
     return {"file": path.as_posix(), "url": url}
 
 
+def is_removal(item):
+    return "delisted" in (item.get("new") or {}) and "delisted" not in (item.get("old") or {})
+
+
+def fetch_removed(item, allowed, out):
+    """The source at the commit where the row is gone, and that commit's date."""
+    commit = item.get("removed_commit")
+    if not SHA.fullmatch(commit or ""):
+        return {"removed_missing": "no upstream commit showing the removal"}
+    entry = fetch({**item, "source_commit": commit}, allowed, out)
+    if "missing" in entry:
+        return {"removed_missing": entry["missing"]}
+    _, owner, repo, _ = locate(item["source"], commit)
+    try:
+        date = ghapi.get(f"repos/{owner}/{repo}/commits/{commit}")["commit"]["committer"]["date"][:10]
+    except (urllib.error.URLError, ghapi.GitHubError, KeyError, TypeError) as exc:
+        return {"removed_missing": f"could not read the commit: {exc}"}
+    return {"removed_file": entry["file"], "removed_url": entry["url"], "removed_date": date}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--context", required=True)
@@ -113,7 +139,10 @@ def main():
             index[item["id"]] = {"missing": "no data file for this tool on main"}
             continue
         data = load_yaml(tool_file)
-        index[item["id"]] = fetch(item, [data["repo"], *data.get("official_sources", [])], args.out)
+        allowed = [data["repo"], *data.get("official_sources", [])]
+        index[item["id"]] = fetch(item, allowed, args.out)
+        if is_removal(item):
+            index[item["id"]].update(fetch_removed(item, allowed, args.out))
         print(f"{item['id']}: {index[item['id']].get('file') or 'missing, ' + index[item['id']]['missing']}")
     Path(args.out).mkdir(parents=True, exist_ok=True)
     (Path(args.out) / "index.json").write_text(json.dumps(index, indent=2, sort_keys=True) + "\n", encoding="utf-8")

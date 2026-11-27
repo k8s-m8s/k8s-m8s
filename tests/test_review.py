@@ -209,6 +209,36 @@ class FetchSourcesTest(unittest.TestCase):
         with mock.patch.object(fetch_sources, "download", side_effect=ValueError("over 2 MB")):
             self.assertIn("2 MB", fetch_sources.fetch(item, ["https://github.com/o/r"], "unused")["missing"])
 
+    def removal(self, removed_commit="e" * 40):
+        return {"tool": "demo", "source": "https://github.com/o/r/blob/main/docs/a.md", "source_commit": self.SHA,
+                "old": {"version": "1.1"}, "new": {"version": "1.1", "delisted": "2026-12-01"},
+                "removed_commit": removed_commit}
+
+    def test_a_removal_is_also_fetched_where_the_row_is_gone(self):
+        item = self.removal()
+        self.assertTrue(fetch_sources.is_removal(item))
+        commit = {"commit": {"committer": {"date": "2026-11-30T10:00:00Z"}}}
+        with tempfile.TemporaryDirectory() as tmp, \
+                mock.patch.object(fetch_sources, "download", return_value=b"| 1.2 |") as download, \
+                mock.patch.object(fetch_sources.ghapi, "get", return_value=commit) as get:
+            result = fetch_sources.fetch_removed(item, ["https://github.com/o/r"], tmp)
+            self.assertEqual(Path(result["removed_file"]).read_bytes(), b"| 1.2 |")
+            self.assertTrue(result["removed_file"].endswith(f"demo/{'e' * 40}/docs/a.md"))
+        download.assert_called_once_with(f"https://raw.githubusercontent.com/o/r/{'e' * 40}/docs/a.md")
+        get.assert_called_once_with(f"repos/o/r/commits/{'e' * 40}")
+        self.assertEqual(result["removed_date"], "2026-11-30")
+
+    def test_a_removal_without_its_commit_is_missing(self):
+        for commit in (None, "abc1234"):
+            with mock.patch.object(fetch_sources, "download") as download:
+                result = fetch_sources.fetch_removed(self.removal(commit), ["https://github.com/o/r"], "unused")
+            download.assert_not_called()
+            self.assertIn("removed_missing", result)
+
+    def test_other_changes_are_not_removals(self):
+        self.assertFalse(fetch_sources.is_removal({"old": {"version": "1.1"}, "new": {"version": "1.1", "tested": ["1.37"]}}))
+        self.assertFalse(fetch_sources.is_removal({"old": {"delisted": "2026-01-01"}, "new": {"delisted": "2026-01-02"}}))
+
 
 if __name__ == "__main__":
     unittest.main()

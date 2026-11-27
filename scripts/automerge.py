@@ -5,13 +5,13 @@ Usage (automerge.yml, run from main):
     python scripts/automerge.py decide --out actions.json [--pr N]   # GH_TOKEN: read-only workflow token
     python scripts/automerge.py act --actions actions.json            # GH_TOKEN: automation App token
 
-decide reads pull requests, comments and workflow runs, reads the diff with
-`git show` from the main checkout (nothing from the pull request is run), and
-writes the actions to take. act performs them: squash merges (pinned to the
-reviewed head SHA), labels and comments. With AUTOMERGE_DRY_RUN=true, claim
-pull requests get a "would merge" or "would not merge" comment instead of a
-merge; bookkeeping pull requests merge either way. Window pull requests and
-anything labelled human-merge are never merged.
+decide reads pull requests, comments, checks and workflow runs, reads the
+diff with `git show` from the main checkout (nothing from the pull request is
+run), and writes the actions to take. act performs them: squash merges (pinned
+to the checked head SHA), labels and comments. With AUTOMERGE_DRY_RUN=true,
+claim and window pull requests get a "would merge" or "would not merge"
+comment instead of a merge; bookkeeping pull requests merge either way.
+Nothing labelled human-merge, and no test fixture, is ever merged.
 
 Environment: AUTOMERGE_ENABLED, AUTOMERGE_DRY_RUN, AUTOMATION_LOGIN,
 REVIEWER_LOGIN, GITHUB_REPOSITORY, GITHUB_SERVER_URL, GITHUB_RUN_ID.
@@ -31,11 +31,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import findings as block  # noqa: E402
 import ghapi  # noqa: E402
 import reviews  # noqa: E402
-from check_diff import changed_paths, check_bookkeeping, check_claim, merge_base, reader  # noqa: E402
+from check_diff import (KUBERNETES_FILE, MINOR, changed_paths, check_bookkeeping, check_claim,  # noqa: E402
+                        check_window, merge_base, parse, reader)
 
 ROOT = Path(__file__).resolve().parent.parent
 MIN_AGE = datetime.timedelta(hours=2)
 DECISION = re.compile(r"<!-- k8s-m8s-automerge head=([0-9a-f]{40}) decision=([a-z-]+) -->")
+PASSED = {"success", "neutral", "skipped"}
+WINDOW_BRANCH = "automated/window"
+FIXTURE_TITLE = "[test fixture]"
 
 
 class Wait(Exception):
@@ -58,6 +62,28 @@ def validate_state(sha):
     return "success" if latest["conclusion"] == "success" else latest["status"] if latest["status"] != "completed" else "failure"
 
 
+def checks_state(sha):
+    """(running, failed): the names of the checks on a commit that have not finished, and that did not pass.
+
+    Check runs and commit statuses both count. Only the newest run of each check
+    (by app and name) is read, so a re-run that passes replaces a failure.
+    """
+    repo = ghapi.repo()
+    newest = {}
+    for run in ghapi.paged(f"repos/{repo}/commits/{sha}/check-runs", key="check_runs", filter="all"):
+        key = ((run.get("app") or {}).get("id"), run["name"])
+        if key not in newest or run["id"] > newest[key]["id"]:
+            newest[key] = run
+    running = [r["name"] for r in newest.values() if r["status"] != "completed"]
+    failed = [r["name"] for r in newest.values() if r["status"] == "completed" and r["conclusion"] not in PASSED]
+    for status in ghapi.get(f"repos/{repo}/commits/{sha}/status").get("statuses", []):
+        if status["state"] == "pending":
+            running.append(status["context"])
+        elif status["state"] != "success":
+            failed.append(status["context"])
+    return sorted(running), sorted(failed)
+
+
 def fetch_head(pull):
     """Make the pull request's head commit readable with git show in the main checkout."""
     subprocess.run(["git", "-C", str(ROOT), "fetch", "--quiet", "--no-tags", "origin",
@@ -70,20 +96,42 @@ def fetch_head(pull):
     return base, fetched
 
 
-def common_gates(pull, automation):
+def author_gates(pull, automation):
     if (pull["head"].get("repo") or {}).get("full_name") != ghapi.repo():
         raise Refuse("head is not in this repository")
     if pull["user"]["login"] != automation or pull["user"].get("type") != "Bot":
         raise Refuse(f"author is {pull['user']['login']}, not {automation}")
-    state = validate_state(pull["head"]["sha"])
+
+
+def checks_gate(pull):
+    """Every check on the head passed: validate.yml, which must have run, and any other check or status."""
+    sha = pull["head"]["sha"]
+    state = validate_state(sha)
+    running, failed = checks_state(sha)
     if state == "failure":
-        raise Wait("validate.yml failed on the head commit")
+        failed = sorted({*failed, "validate"})
+    if failed:
+        raise Refuse("checks failed on the head commit: " + ", ".join(failed))
     if state != "success":
         raise Wait(f"validate.yml is {state} on the head commit")
+    if running:
+        raise Wait("checks are still running on the head commit: " + ", ".join(running))
+
+
+def labelled(pull):
+    return any(label["name"] == "human-merge" for label in pull["labels"])
+
+
+def findings_of(pull):
+    try:
+        return block.parse(pull["body"])
+    except ValueError as exc:
+        raise Refuse(f"findings block: {exc}") from None
 
 
 def bookkeeping_gates(pull, automation):
-    common_gates(pull, automation)
+    author_gates(pull, automation)
+    checks_gate(pull)
     base, head = fetch_head(pull)
     problems = check_bookkeeping(reader(ROOT, base), reader(ROOT, head), changed_paths(ROOT, base, head))
     if problems:
@@ -91,16 +139,14 @@ def bookkeeping_gates(pull, automation):
 
 
 def claim_gates(pull, automation, reviewer, now):
-    """Gates 1 to 8 in docs/maintainers/automation.md. Returns the review comment's URL."""
+    """Gates 1 to 9 in docs/maintainers/automation.md. Returns what the merge comment links to."""
     if not pull["head"]["ref"].startswith("automated/claim/"):
         raise Refuse("head branch is not automated/claim/*")
-    common_gates(pull, automation)                                   # gates 1 and 3
-    if any(label["name"] == "human-merge" for label in pull["labels"]):  # gate 2
+    author_gates(pull, automation)                                   # gate 1
+    if labelled(pull):                                               # gate 2
         raise Wait("labelled human-merge")
-    try:
-        items = block.parse(pull["body"])
-    except ValueError as exc:
-        raise Refuse(f"findings block: {exc}") from None
+    checks_gate(pull)                                                # gate 3
+    items = findings_of(pull)
     base, head = fetch_head(pull)
     problems = check_claim(reader(ROOT, base), reader(ROOT, head), changed_paths(ROOT, base, head), items)
     if problems:                                                     # gate 4
@@ -128,7 +174,46 @@ def claim_gates(pull, automation, reviewer, now):
         raise Refuse("commits were pushed after the review")
     if now - when(pull["created_at"]) < MIN_AGE:                     # gate 8
         raise Wait("open for less than 2 hours")
-    return review["html_url"]
+    if pull["title"].startswith(FIXTURE_TITLE):                      # gate 9, last so a rehearsal shows the review's verdict
+        raise Refuse("a test fixture is never merged")
+    return f"[Review]({review['html_url']})"
+
+
+def kubernetes_release(minor):
+    """Kubernetes' own release record for a minor's first release. Waits until it is published as a full release."""
+    tag = f"v{minor}.0"
+    try:
+        release = ghapi.get(f"repos/kubernetes/kubernetes/releases/tags/{ghapi.quote(tag)}")
+    except ghapi.GitHubError as err:
+        if err.status == 404:
+            raise Wait(f"Kubernetes {tag} is not published yet") from None
+        raise
+    if release.get("draft") or release.get("prerelease"):
+        raise Wait(f"Kubernetes {tag} is not a full release yet")
+    return f"Kubernetes [{tag}]({release['html_url']}) is released"
+
+
+def window_gates(pull, automation, now):
+    """The window gates in docs/maintainers/automation.md. Returns what the merge comment says."""
+    if pull["head"]["ref"] != WINDOW_BRANCH:
+        raise Refuse(f"head branch is not {WINDOW_BRANCH}")
+    author_gates(pull, automation)
+    if labelled(pull):
+        raise Wait("labelled human-merge")
+    checks_gate(pull)
+    items = findings_of(pull)
+    base, head = fetch_head(pull)
+    read_head = reader(ROOT, head)
+    problems = check_window(reader(ROOT, base), read_head, changed_paths(ROOT, base, head), items)
+    if problems:
+        raise Refuse("window diff check failed: " + "; ".join(problems))
+    newest = parse(read_head(KUBERNETES_FILE))["window"][0]
+    if not MINOR.fullmatch(newest):  # check_window already requires this; the release lookup relies on it
+        raise Refuse(f"unexpected minor {newest!r}")
+    released = kubernetes_release(newest)
+    if now - when(pull["created_at"]) < MIN_AGE:
+        raise Wait("open for less than 2 hours")
+    return released
 
 
 def last_decision(comments, automation, head):
@@ -153,22 +238,25 @@ def decide(pull, env, now):
             return []
         except Refuse as exc:
             print(f"#{number}: refused, {exc}")
-            return [] if any(l["name"] == "human-merge" for l in pull["labels"]) else [
+            return [] if labelled(pull) else [
                 {"pr": number, "action": "label", "label": "human-merge", "comment": f"Not merging automatically: {exc}."}]
         return [{"pr": number, "action": "merge", "sha": head,
-                 "comment": "Merged automatically: only `verified` and `source_commit` changed."}]
-    if not ref.startswith("automated/claim/"):
+                 "comment": "Merged automatically: only `verified` and `source_commit` changed, and every check passed."}]
+    if ref == WINDOW_BRANCH:
+        gates = lambda: window_gates(pull, automation, now)  # noqa: E731
+    elif ref.startswith("automated/claim/"):
+        gates = lambda: claim_gates(pull, automation, reviewer, now)  # noqa: E731
+    else:
         print(f"#{number}: {ref} never merges automatically")
         return []
     try:
-        review_url = claim_gates(pull, automation, reviewer, now)
+        detail = gates()
     except Wait as exc:
         print(f"#{number}: waiting, {exc}")
         return []
     except Refuse as exc:
         print(f"#{number}: refused, {exc}")
-        actions = [] if any(l["name"] == "human-merge" for l in pull["labels"]) else [
-            {"pr": number, "action": "label", "label": "human-merge"}]
+        actions = [] if labelled(pull) else [{"pr": number, "action": "label", "label": "human-merge"}]
         comments = ghapi.paged(f"repos/{ghapi.repo()}/issues/{number}/comments")
         if last_decision(comments, automation, head) != (head, "refused"):
             prefix = "Would not merge" if dry_run else "Not merging"
@@ -181,10 +269,10 @@ def decide(pull, env, now):
         if last_decision(comments, automation, head) == (head, "would-merge"):
             return []
         return [{"pr": number, "action": "comment",
-                 "comment": f"Would merge (dry run): every gate passed. [Review]({review_url}).\n\n"
+                 "comment": f"Would merge (dry run): every gate passed. {detail}.\n\n"
                             f"<!-- k8s-m8s-automerge head={head} decision=would-merge -->"}]
     return [{"pr": number, "action": "merge", "sha": head,
-             "comment": f"Merged automatically: every gate passed. [Review]({review_url})."}]
+             "comment": f"Merged automatically: every gate passed. {detail}."}]
 
 
 def act(actions):

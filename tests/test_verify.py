@@ -69,6 +69,28 @@ class ClassTest(unittest.TestCase):
         added = next(f for f in findings if f["id"] == "demo/1.4")
         self.assertIsNone(added["old"])
         self.assertEqual(added["new"]["source_commit"], "a" * 40)
+        self.assertNotIn("removed_commit", added)
+        removal = next(f for f in findings if f["id"] == "demo/1.1")
+        self.assertEqual(removal["removed_commit"], "a" * 40)  # today's reading of the same source, without the row
+
+    def test_a_removal_with_no_reading_of_its_source_names_no_commit(self):
+        upstream = [{**r, "source": "https://e.org/other"} for r in recorded()[:2]]
+        for r in upstream:
+            r.pop("verified")
+        _, findings = self.run_reconcile(upstream)
+        removal = next(f for f in findings if f["id"] == "demo/1.1")
+        self.assertIn("removed_commit", removal)
+        self.assertIsNone(removal["removed_commit"])
+
+    def test_a_row_upstream_history_delists_names_the_commit_that_replaced_it(self):
+        history = {"version": "1.1", "tested": ["1.35"], "source": "https://e.org/a/old", "source_commit": "c" * 40,
+                   "delisted": "2026-11-20", "removed_commit": "d" * 40}
+        upstream = [{k: v for k, v in r.items() if k != "verified"} for r in recorded()[:2]] + [history]
+        releases, findings = self.run_reconcile(upstream, "claims")
+        removal = next(f for f in findings if f["id"] == "demo/1.1")
+        self.assertEqual((removal["removed_commit"], removal["new"]["delisted"]), ("d" * 40, "2026-11-20"))
+        self.assertNotIn("removed_commit", removal["new"])
+        self.assertFalse(any("removed_commit" in r for r in releases))  # evidence for the review, never data
 
     def test_a_relisted_row_needs_a_human(self):
         upstream = [{k: v for k, v in r.items() if k not in ("verified", "delisted")} for r in recorded()]
@@ -121,7 +143,7 @@ schedules:
 
 class WindowRollTest(unittest.TestCase):
     def test_a_new_minor_rolls_the_window(self):
-        window = window_from_schedule(SCHEDULE_138)
+        window = window_from_schedule(SCHEDULE_138, today="2026-12-16")
         self.assertEqual(window, ["1.38", "1.37", "1.36"])
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "kubernetes.yaml"
@@ -133,6 +155,11 @@ class WindowRollTest(unittest.TestCase):
             data = load_yaml(path)
             self.assertEqual(data["window"], ["1.38", "1.37", "1.36"])
             self.assertEqual((data["source_commit"], data["verified"]), ("c" * 40, TODAY))
+
+    def test_a_scheduled_minor_joins_only_on_its_release_date(self):
+        self.assertEqual(window_from_schedule(SCHEDULE_138, today="2026-12-15"), ["1.37", "1.36", "1.35"])
+        with self.assertRaises(UpstreamChanged):
+            window_from_schedule(SCHEDULE_138.replace('  releaseDate: "2026-12-16"\n', ""), today="2026-12-16")
 
     def test_a_matching_window_is_left_alone_in_claims_mode(self):
         with tempfile.TemporaryDirectory() as tmp:

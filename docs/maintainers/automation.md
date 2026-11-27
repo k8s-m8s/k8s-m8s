@@ -4,7 +4,7 @@ description: "How k8s-m8s checks its data against upstream daily: the workflows,
 
 # Automation
 
-How k8s-m8s keeps its data in step with upstream without routine maintainer work, and the rules that keep that safe. Every claim change is still checked against its upstream source before it is published. A script proposes the change, Claude checks it in CI with no GitHub write access, and deterministic scripts post the verdict and merge. Maintainers handle only the riskier changes.
+How k8s-m8s keeps its data in step with upstream without routine maintainer work, and the rules that keep that safe. Every claim change is still checked against its upstream source before it is published. A script proposes the change, Claude checks it in CI with no GitHub write access, and deterministic scripts post the verdict and merge. Maintainers handle only what the automation refuses or can't read.
 
 ## Who checks what
 
@@ -18,7 +18,7 @@ A claim change passes three separate checks before it can merge. Each one catche
 
 **2. The review checks what the change means (Claude).** Claude never sees the parser's logic. It reads the proposed change and the upstream file at the recorded commit, and answers one question for each change: does upstream actually say this? It checks the version numbers, the claim level (`tested`, `stated` or `unsupported`) and the wording, and that nothing was inferred. It returns `confirmed`, `mismatch` or `ambiguous`, and it cannot change data or write to GitHub.
 
-**3. The merge gates check the change's form (scripts).** Gate 4 in particular (`check_diff.py claim`) checks that only one tool's file changed, nothing was removed, nothing involving `delisted` changed, the sources are allowlisted, and the diff matches the findings exactly. It checks the shape of the change, not whether upstream says it.
+**3. The merge gates check the change's form (scripts).** Gate 4 in particular (`check_diff.py claim`) checks that only one tool's file changed, no entry was deleted, at most two entries became delisted and history is untouched, the sources are allowlisted, and the diff matches the findings exactly. It checks the shape of the change, not whether upstream says it. Every check on the pull request must also have passed.
 
 | | Detect | Review | Merge gates |
 |---|---|---|---|
@@ -64,7 +64,7 @@ Labels: `claim-change`, `window-change`, `bookkeeping`, `human-merge`, `needs-hu
 | `REVIEWER_LOGIN` | `k8s-m8s-reviewer[bot]` |
 | `AUTOMATION_LOGIN` | `k8s-m8s-automation[bot]` |
 | `AUTOMERGE_ENABLED` | `true` |
-| `AUTOMERGE_DRY_RUN` | `true` (claim pull requests only; see the shadow period) |
+| `AUTOMERGE_DRY_RUN` | `false` (`true` makes claim and window pull requests comment instead of merging; see [dry run](#dry-run)) |
 
 ## Repository configuration
 
@@ -121,7 +121,7 @@ The settings are under **Settings → Actions → General → Actions permission
 
 1. `main` is checked out to `rules/` and the pull request head to `pr/`.
 2. `review_context.py` writes `context/findings.json` (from the pull request body's findings block), `context/diff.patch` and `context/pr.json`. It stops the review if the head moved or if the diff and the findings disagree.
-3. `fetch_sources.py` downloads each finding's source at `source_commit` into `upstream/<tool>/<commit>/<path>` and writes `upstream/index.json`. It only fetches sources under the tool's `repo` or `official_sources` as `main` records them, contacts only `raw.githubusercontent.com` and `api.github.com`, and skips files over 2 MB.
+3. `fetch_sources.py` downloads each finding's source at `source_commit` into `upstream/<tool>/<commit>/<path>` and writes `upstream/index.json`. For a removal it also downloads the source at `removed_commit`, where the row is gone, and records that commit's date. It only fetches sources under the tool's `repo` or `official_sources` as `main` records them, contacts only `raw.githubusercontent.com` and `api.github.com`, and skips files over 2 MB.
 4. `pr/` is deleted, and `docs/maintainers/claude-review.md` is copied to the workspace root.
 5. Claude runs with `--permission-mode default`, `--allowedTools "Read,Glob,Grep"`, a deny list that covers Bash, file writes, web tools, subagents and the action's GitHub tools, `--max-turns 40`, a pinned model, and the read-only `github.token`. It returns its verdict through `--json-schema`, which is the same schema as `schema/review.schema.json`.
 6. `post_review.py render` accepts the verdict only if it matches the schema with exactly one row per finding, no reason contains a marker or looks like a credential, and Claude's session log shows only Read, Glob, Grep and the structured output tool, reading only `context/`, `upstream/`, `rules/` or the instructions file. The head SHA in the marker comes from `context/pr.json`, never from Claude. Reasons are HTML-escaped.
@@ -131,17 +131,21 @@ The settings are under **Settings → Actions → General → Actions permission
 
 `automerge.yml` checks `AUTOMERGE_ENABLED` first. The gates run with the read-only workflow token, from the `main` checkout, reading the pull request with `git fetch` and `git show`. The automation App's token is minted only if there is something to do.
 
-**Bookkeeping (`automated/bookkeeping`)** merges, even in dry run, when the author is `AUTOMATION_LOGIN`, `validate.yml` passed on the head, and `check_diff.py bookkeeping` passes. That check passes only if the only differences are `verified` and `source_commit` values on existing entries of `data/tools/*.yaml` and in `data/kubernetes.yaml`. A failure adds `human-merge`.
+Every automated pull request needs every check on its head commit to have passed: `validate.yml`, which must have run, and any other check run or commit status (only the newest run of each check counts, so a re-run can replace a failure). While a check is running the pull request waits. If one finished any other way than success, neutral or skipped, it is labelled `human-merge` with a comment naming the check: re-run it, and once it passes remove the label.
+
+**Bookkeeping (`automated/bookkeeping`)** merges, even in dry run, when the author is `AUTOMATION_LOGIN`, every check passed on the head, and `check_diff.py bookkeeping` passes. That check passes only if the only differences are `verified` and `source_commit` values on existing entries of `data/tools/*.yaml` and in `data/kubernetes.yaml`. A failure adds `human-merge`.
 
 **Claim changes (`automated/claim/*`)** merge only when every gate passes:
 
 1. The author is `AUTOMATION_LOGIN` (a Bot account), and the head branch is `automated/claim/*` in this repository, not a fork.
 2. There is no `human-merge` label.
-3. `validate.yml` passed on the head commit.
+3. Every check passed on the head commit, including `validate.yml`.
 4. `check_diff.py claim` passes:
    - exactly one `data/tools/<tool>.yaml` changed, and nothing else (so nothing under `.github/`, `scripts/`, `schema/`, `docs/`, `.claude/`, `CLAUDE.md`, `zensical.toml` or `requirements*`);
    - the file's header (name, repo, `official_sources`, notes) is unchanged;
-   - no entry was removed, nothing involving `delisted` changed, and at most 10 entries changed;
+   - no entry was deleted, and at most 10 entries changed;
+   - an entry becomes delisted (a removal) only if its finding names a full `removed_commit`, the upstream commit where the row is gone. A plain removal changes nothing but `delisted`; a row read from upstream's history may also take the last values upstream listed. At most 2 removals per pull request, and at least one current entry must remain;
+   - no entry that is already delisted changes, and no entry is added already delisted;
    - every changed entry has a source under the tool's `repo` or `official_sources` (as `main` records them) and a full `source_commit`;
    - the changed entries are exactly the findings block's, with its old and new values;
    - the releases block is in the exact layout the writer produces, so nothing hides in comments.
@@ -149,14 +153,24 @@ The settings are under **Settings → Actions → General → Actions permission
 6. That comment has a `confirmed` row for every finding id, and no other rows.
 7. The head commit is older than that comment.
 8. The pull request has been open for at least 2 hours.
+9. It is not a `[test fixture]` pull request. This is checked last, so a rehearsal still shows the review's own verdict.
 
-When every gate passes, the job squash-merges at the reviewed head SHA, comments with a link to the review, and deletes the branch. If gate 1, 4, 5 or 6 fails, or the verdict is `rejected`, it adds `human-merge` and comments once with the reason. A pull request that is waiting (checks running, no review for this head yet, under 2 hours old) is left alone. Window pull requests and pull requests opened by people are never merged automatically.
+**Window changes (`automated/window`)** merge only when every gate passes:
 
-Claim pull requests whose changes involve `delisted` are labelled `human-merge` when they are opened, so they are not reviewed or merged automatically.
+1. The author is `AUTOMATION_LOGIN` (a Bot account), and the head branch is `automated/window` in this repository.
+2. There is no `human-merge` label.
+3. Every check passed on the head commit, including `validate.yml`.
+4. `check_diff.py window` passes: only `data/kubernetes.yaml` changed, and only its `window`, `source_commit` and `verified`; the new window is the old one rolled forward by exactly one minor (`["1.38", "1.37", "1.36"]` after `["1.37", "1.36", "1.35"]`); `source_commit` is a full commit; and the one `kubernetes/window` finding has the diff's old and new values.
+5. Kubernetes has published the new minor's first release: the `kubernetes/kubernetes` GitHub release `v<minor>.0` exists and is not a draft or a pre-release. Until then the pull request waits. This is a second source: the window itself comes from the release schedule data, where `verify.py` counts a minor only once its `releaseDate` has come.
+6. The pull request has been open for at least 2 hours.
 
-### Shadow period
+When every gate passes, the job squash-merges at the checked head SHA, comments (with a link to the review, or to the Kubernetes release), and deletes the branch. If a gate that needs a maintainer fails (a failed check, gate 4, an edited or invalid review, a `rejected` verdict or missing rows, commits after the review, a fixture), it adds `human-merge` and comments once with the reason. A pull request that is waiting (checks running, no review for this head yet, release not published, under 2 hours old) is left alone. Pull requests opened by people are never merged automatically.
 
-For the first 4 weeks `AUTOMERGE_DRY_RUN=true` stays set. Claim pull requests get a "Would merge" or "Would not merge, reason: …" comment, and are still labelled `human-merge` on refusal. Maintainers merge by hand and compare with the comment. Turn dry run off (`AUTOMERGE_DRY_RUN=false`) only if the job and the maintainer never disagreed. Bookkeeping pull requests merge automatically from the start.
+A claim or window pull request that gate 4 or the window check would refuse is labelled `human-merge` when it is opened, with the reason in its description, so it is not reviewed or merged automatically.
+
+### Dry run
+
+With `AUTOMERGE_DRY_RUN=true`, claim and window pull requests get a "Would merge" or "Would not merge, reason: …" comment instead of a merge, and are still labelled `human-merge` on refusal. Bookkeeping pull requests merge either way. Dry run was on for a shadow period from the automation's start until late November 2026, while maintainers merged by hand and compared with the comments; they never disagreed. Turn it on again to watch a change to the gates without merging.
 
 ## Routine operations
 
@@ -166,13 +180,13 @@ For the first 4 weeks `AUTOMERGE_DRY_RUN=true` stays set. Claim pull requests ge
 
 **A `needs-human` issue.** Fix the extractor or the data in a pull request, as for any other change. The issue closes itself on the first daily run where the problem is gone.
 
-**A window pull request.** Follow the window roll runbook in `CONTRIBUTING.md`.
+**A pull request labelled `human-merge`.** Its comment or description gives the reason. For a window pull request, follow the window roll runbook in `CONTRIBUTING.md`. For a removal, check both linked commits: the row is listed at the first and gone at the second.
 
 **Renew tokens.**
 - `CLAUDE_CODE_OAUTH_TOKEN`: run `claude setup-token` again before the expiry it showed, and replace the secret in the `review` environment.
 - App private keys don't expire. Rotate a key by generating a new one in the App's settings, replacing the environment secret, then deleting the old key.
 
-**Rehearse end to end.** Run `detect.yml` manually with the `fixture` input set to a tool name (for example `velero`). It opens a `[test fixture]` claim pull request that adds a `tested` patch version upstream does not state (`<newest minor>.99`). The review must mark it `mismatch`, and `automerge.yml` must say "Would not merge" and add `human-merge`. Close the pull request afterwards. The next `detect.yml` run deletes its branch, as it does for any automated branch whose pull request was closed by hand.
+**Rehearse end to end.** Run `detect.yml` manually with the `fixture` input set to a tool name (for example `velero`). With `fixture_kind` `claim`, it opens a `[test fixture]` claim pull request that adds a `tested` patch version upstream does not state (`<newest minor>.99`). With `removal`, it marks the newest entry delisted, naming as the commit where the row is gone a commit that still lists it. Either way the review must mark it `mismatch`, and `automerge.yml` must say "Not merging" (or "Would not merge" in dry run) and add `human-merge`. Gate 9 refuses a fixture even if the review were wrong. Close the pull request afterwards. The next `detect.yml` run deletes its branch, as it does for any automated branch whose pull request was closed by hand.
 
 **Update the actions.** Dependabot proposes action and pip updates monthly, grouped. They never merge automatically. Review updates to `anthropics/claude-code-action`, `actions/create-github-app-token` and Zensical line by line. For `claude-code-action`, check the release notes for changes to permission modes, `allowed_bots`, `structured_output` and `execution_file`. Then re-run the fixture rehearsal.
 
@@ -188,4 +202,6 @@ Why some parts work the way they do:
 - **Claim pull requests are written with `verify.py --claims-only`.** `--apply` refreshes `verified` on every entry, which would make a claim pull request touch the whole file and change every day.
 - **Automated pull requests contain only data files.** The generated pages (`docs/matrix.md`, `docs/tools/`) are not committed.
 - **Findings have one id per entry,** `<tool>/<version>`.
+- **A removal names the commit where the row is gone.** `removed_commit` is the commit at which upstream's statement was read without the row (for a row read from upstream's history, the commit that replaced it). It is evidence for the review, never written to the data. When no commit read that day shows the removal (for example, the whole source file is gone), it is empty and gate 4 leaves the change to a maintainer.
+- **Window changes have no Claude review.** The question is mechanical (is the minor released, and is the window the latest three), so it is checked twice by scripts, against the release schedule data and against Kubernetes' own release record.
 - **`CODEOWNERS` names the `@k8s-m8s/maintainers` team** rather than a personal account.

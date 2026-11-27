@@ -1,4 +1,4 @@
-"""Unit tests for check_diff.py: the bookkeeping check and merge gate 4."""
+"""Unit tests for check_diff.py: the bookkeeping check, merge gate 4 and the window check."""
 
 import copy
 import sys
@@ -9,7 +9,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from check_diff import changed_paths, check_bookkeeping, check_claim, merge_base, reader  # noqa: E402
+from check_diff import changed_paths, check_bookkeeping, check_claim, check_window, merge_base, reader, rolled  # noqa: E402
 from helpers import HEADER, SHA_B, claim_findings, commit, entry, make_repo, releases, tool_text  # noqa: E402
 
 PATH = "data/tools/demo.yaml"
@@ -29,11 +29,24 @@ def check(kind, head_files, items=None, base_files=None):
     return check_claim(read_base, read_head, paths, items if items is not None else [])
 
 
-def changed(fn):
-    """The demo releases with fn applied to a copy, and the matching findings."""
-    new = copy.deepcopy(releases())
+def changed(fn, base=None, removed_commit=SHA_B):
+    """The demo releases with fn applied to a copy, and the matching findings.
+    A removal's finding names removed_commit, as verify.py's does."""
+    base = base or releases()
+    new = copy.deepcopy(base)
     fn(new)
-    return tool_text(new), claim_findings("demo", releases(), new)
+    items = claim_findings("demo", base, new)
+    for item in items:
+        if "delisted" in (item["new"] or {}) and "delisted" not in (item["old"] or {}):
+            item["removed_commit"] = removed_commit
+    return tool_text(new), items
+
+
+def delist(*indexes, date="2026-12-01"):
+    def fn(r):
+        for index in indexes:
+            r[index]["delisted"] = date
+    return fn
 
 
 class BookkeepingTest(unittest.TestCase):
@@ -78,9 +91,50 @@ class ClaimGateTest(unittest.TestCase):
         problems = check("claim", {**files(**{PATH: text}), **other}, items, {**files(), **other, "data/tools/other.yaml": "x"})
         self.assertTrue(any("exactly one tool" in p for p in problems))
 
-    def test_delisted_is_refused(self):
-        text, items = changed(lambda r: r[0].update(delisted="2026-12-01"))
-        self.assertTrue(any("delisted" in p for p in check("claim", files(**{PATH: text}), items)))
+    def test_a_removal_naming_the_commit_where_the_row_is_gone_passes(self):
+        text, items = changed(delist(0))
+        self.assertEqual(items[0]["fields"], ["delisted"])
+        self.assertEqual(check("claim", files(**{PATH: text}), items), [])
+
+    def test_a_removal_without_that_commit_is_refused(self):
+        for missing in (None, "abc1234"):
+            text, items = changed(delist(0), removed_commit=missing)
+            self.assertTrue(any("showing the removal" in p for p in check("claim", files(**{PATH: text}), items)), missing)
+
+    def test_a_plain_removal_changes_nothing_else(self):
+        text, items = changed(lambda r: r[0].update(delisted="2026-12-01", verified="2026-12-01"))
+        self.assertTrue(any("beyond delisted" in p for p in check("claim", files(**{PATH: text}), items)))
+
+    def test_a_row_read_from_history_may_take_its_last_listed_values(self):
+        last = {"source": "https://github.com/example/demo/blob/" + SHA_B + "/README.md", "source_commit": SHA_B,
+                "tested": ["1.32"], "verified": "2026-12-01", "delisted": "2026-11-20"}
+        text, items = changed(lambda r: r[0].update(last))
+        self.assertEqual(items[0]["fields"], ["tested", "source", "delisted"])
+        self.assertEqual(check("claim", files(**{PATH: text}), items), [])
+
+    def test_more_than_two_removals_are_refused(self):
+        base = releases(4)
+        text, items = changed(delist(0, 1, 2), base=base)
+        problems = check("claim", files(**{PATH: text}), items, files(**{PATH: tool_text(base)}))
+        self.assertTrue(any("3 entries delisted" in p for p in problems))
+
+    def test_delisting_every_current_entry_is_refused(self):
+        base = releases(2)
+        text, items = changed(delist(0, 1), base=base)
+        problems = check("claim", files(**{PATH: text}), items, files(**{PATH: tool_text(base)}))
+        self.assertTrue(any("every entry" in p for p in problems))
+
+    def test_history_never_changes(self):
+        base = [*releases(), entry("1.0", ["1.30"], delisted="2026-10-01")]
+        for fn in (lambda r: r[3].update(delisted="2026-10-02"), lambda r: r[3].pop("delisted"),
+                   lambda r: r[3].update(tested=["1.29"])):
+            text, items = changed(fn, base=base)
+            problems = check("claim", files(**{PATH: text}), items, files(**{PATH: tool_text(base)}))
+            self.assertTrue(any("already delisted" in p for p in problems))
+
+    def test_an_entry_added_already_delisted_is_refused(self):
+        text, items = changed(lambda r: r.append(entry("0.9", ["1.29"], delisted="2026-01-01")))
+        self.assertTrue(any("added already delisted" in p for p in check("claim", files(**{PATH: text}), items)))
 
     def test_a_removed_entry_is_refused(self):
         text, items = changed(lambda r: r.pop())
@@ -115,6 +169,55 @@ class ClaimGateTest(unittest.TestCase):
     def test_a_short_source_commit_is_refused(self):
         text, items = changed(lambda r: r[0].update(source_commit="abc1234", tested=["1.38"]))
         self.assertTrue(any("source_commit" in p for p in check("claim", files(**{PATH: text}), items)))
+
+
+def window_roll(window=("1.38", "1.37", "1.36"), commit_sha="c" * 40, text=None):
+    """data/kubernetes.yaml after a roll, and its finding, as verify.py writes them."""
+    listed = ", ".join(f'"{m}"' for m in window)
+    text = text or KUBE.replace('["1.37", "1.36", "1.35"]', f"[{listed}]").replace("a" * 40, commit_sha).replace(
+        "2026-11-01", "2026-12-17")
+    item = {"id": "kubernetes/window", "tool": "kubernetes", "version": "window", "class": "window", "fields": ["window"],
+            "old": {"window": ["1.37", "1.36", "1.35"], "source_commit": "a" * 40},
+            "new": {"window": list(window), "source_commit": commit_sha}}
+    return text, [item]
+
+
+class WindowGateTest(unittest.TestCase):
+    def check(self, kube, items, **extra):
+        base, head = files(), {**files(), "data/kubernetes.yaml": kube, **extra}
+        paths = sorted(p for p in set(base) | set(head) if base.get(p) != head.get(p))
+        return check_window(base.get, head.get, paths, items)
+
+    def test_a_roll_by_one_minor_passes(self):
+        self.assertEqual(self.check(*window_roll()), [])
+
+    def test_anything_but_the_next_minor_is_refused(self):
+        for window in (("1.39", "1.38", "1.37"), ("1.36", "1.35", "1.34"), ("1.38", "1.36", "1.37"),
+                       ("1.38", "1.37"), ("1.38", "1.37", "1.36", "1.35"), ("1.38.0", "1.37", "1.36")):
+            self.assertTrue(any("rolled forward" in p for p in self.check(*window_roll(window))), window)
+
+    def test_only_the_window_file_may_change(self):
+        kube, items = window_roll()
+        self.assertTrue(self.check(kube, items, **{PATH: "x"}))
+        other = kube.replace("https://kubernetes.io/releases/", "https://example.invalid/")
+        self.assertTrue(any("outside window" in p for p in self.check(other, items)))
+        self.assertTrue(any("outside window" in p for p in self.check(kube + "# note\n", items)))
+
+    def test_a_short_commit_is_refused(self):
+        self.assertTrue(any("full commit" in p for p in self.check(*window_roll(commit_sha="abc1234"))))
+
+    def test_the_finding_must_match_the_diff(self):
+        kube, items = window_roll()
+        items[0]["new"]["window"] = ["1.38", "1.37", "1.35"]
+        self.assertTrue(any("does not match" in p for p in self.check(kube, items)))
+        self.assertTrue(any("one kubernetes/window finding" in p for p in self.check(kube, [])))
+        self.assertTrue(any("one kubernetes/window finding" in p for p in self.check(kube, items * 2)))
+
+    def test_rolled(self):
+        self.assertEqual(rolled(["1.37", "1.36", "1.35"]), ["1.38", "1.37", "1.36"])
+        self.assertEqual(rolled(["1.9", "1.8", "1.7"]), ["1.10", "1.9", "1.8"])
+        self.assertIsNone(rolled(["1.37", "1.35", "1.34"]))
+        self.assertIsNone(rolled("1.37"))
 
 
 class GitTest(unittest.TestCase):

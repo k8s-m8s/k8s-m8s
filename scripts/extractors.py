@@ -10,13 +10,15 @@ only moves when upstream edits the statement.
 When upstream only ever names its current release, an extractor may also read
 the source's git history and return the rows upstream has since removed. Each
 such row carries its last known values, a permalink to the last commit that
-listed it, and `delisted`: the date of the commit that removed it.
+listed it, `delisted`: the date of the commit that removed it, and
+`removed_commit`: that commit, for the review (it is never written to data).
 
 An extractor raises UpstreamChanged when the statement no longer looks the way
 it did when the parser was written. That is a prompt for a human to re-read
 the source, not something to work around.
 """
 
+import datetime
 import json
 import os
 import re
@@ -779,6 +781,7 @@ def kyverno():
             }
             if newer is not None:
                 entry["delisted"] = newer["commit"]["committer"]["date"][:10]
+                entry["removed_commit"] = newer["sha"]
             releases.append(entry)
         newer = commit
     return releases
@@ -1005,9 +1008,17 @@ def kubernetes_window():
     return window, file_commit(repo, sha, "data/releases/schedule.yaml")
 
 
-def window_from_schedule(text):
-    """The latest three released minors listed in the release schedule data."""
+def window_from_schedule(text, today=None):
+    """The latest three released minors in the release schedule data: a minor
+    counts once its releaseDate has come, not while it is only scheduled."""
+    today = today or datetime.date.today().isoformat()
     schedule = yaml.safe_load(text)
-    released = sorted((str(s["release"]) for s in schedule["schedules"]), key=version_key, reverse=True)
-    need(len(released) >= 3, "release schedule lists fewer than three minors")
+    released = []
+    for entry in schedule["schedules"]:
+        date = str(entry.get("releaseDate") or "")
+        need(re.fullmatch(r"\d{4}-\d{2}-\d{2}", date), f"no releaseDate for {entry.get('release')}")
+        if date <= today:
+            released.append(str(entry["release"]))
+    released.sort(key=version_key, reverse=True)
+    need(len(released) >= 3, "release schedule lists fewer than three released minors")
     return released[:3]

@@ -73,7 +73,10 @@ def describe(recorded, upstream):
     return "; ".join(parts)
 
 
-def finding(tool, label, cls, message, old=None, new=None, fields=None, reason=None):
+def finding(tool, label, cls, message, old=None, new=None, fields=None, reason=None, removal=False, removed_commit=None):
+    """One classified finding. A removal (an entry becoming delisted) also names
+    `removed_commit`: the upstream commit where the row is gone, or None if no
+    commit read today shows it."""
     after = new or old or {}
     result = {
         "id": f"{tool}/{label}",
@@ -87,9 +90,17 @@ def finding(tool, label, cls, message, old=None, new=None, fields=None, reason=N
         "new": new,
         "message": message,
     }
+    if removal:
+        result["removed_commit"] = removed_commit
     if reason:
         result["reason"] = reason
     return result
+
+
+def current_commit(upstream, source):
+    """The commit at which today's reading of `source` was made, if the rows read from it agree on one."""
+    commits = {r.get("source_commit") for r in upstream if r.get("source") == source and "delisted" not in r}
+    return commits.pop() if len(commits) == 1 else None
 
 
 def reconcile(releases, upstream, today, mode, tool="tool", findings=None):
@@ -115,13 +126,15 @@ def reconcile(releases, upstream, today, mode, tool="tool", findings=None):
     def differ(label, message, release, found):
         differences.append(message)
         before = snapshot(release)
+        removal = "delisted" in found and "delisted" not in release
         if applying:
             for field in CLAIM_FIELDS:
                 release.pop(field, None)
             release.update(claims(found), source_commit=found["source_commit"], verified=today)
             if "delisted" in found:
                 release["delisted"] = found["delisted"]
-        findings.append(finding(tool, label, "claim", message, before, snapshot(found)))
+        findings.append(finding(tool, label, "claim", message, before, snapshot(found),
+                                removal=removal, removed_commit=found.get("removed_commit") if removal else None))
 
     def bookkeep(label, release, found):
         if release.get("source_commit") != found["source_commit"]:
@@ -162,7 +175,8 @@ def reconcile(releases, upstream, today, mode, tool="tool", findings=None):
                 message = f"{label}: no longer listed upstream (add 'delisted' and keep the values)"
             differences.append(message)
             findings.append(finding(tool, label, "claim", message, before, {**before, "delisted": today},
-                                    fields=["delisted"]))
+                                    fields=["delisted"], removal=True,
+                                    removed_commit=current_commit(upstream, release.get("source"))))
         elif claims(release) != claims(found):
             differ(label, f"{label}: changed upstream ({describe(claims(release), claims(found))})", release, found)
         else:
@@ -177,7 +191,8 @@ def reconcile(releases, upstream, today, mode, tool="tool", findings=None):
         differences.append(message)
         findings.append(finding(tool, label, "claim", message, None, snapshot(found)))
         if applying:
-            releases.append({**found, **claims(found), "verified": today})
+            row = {k: v for k, v in found.items() if k != "removed_commit"}  # the review's evidence, not data
+            releases.append({**row, **claims(found), "verified": today})
     return matching, differences, problems
 
 

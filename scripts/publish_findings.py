@@ -13,12 +13,14 @@ App's token, minted for this step only.
 
 detect:
   - claim findings: one pull request per tool from automated/claim/<tool>,
-    labelled claim-change (and human-merge if anything involves delisted).
-    The branch is only rewritten when the findings change, or when the pull
-    request can no longer be merged, so a review stays valid between runs.
-    A claim pull request whose tool now matches upstream is closed.
+    labelled claim-change, and human-merge if check_diff.py's claim check
+    (merge gate 4) would refuse it. The branch is only rewritten when the
+    findings change, or when the pull request can no longer be merged, so a
+    review stays valid between runs. A claim pull request whose tool now
+    matches upstream is closed.
   - window findings: a pull request from automated/window, labelled
-    window-change and human-merge.
+    window-change, and human-merge if check_diff.py's window check would
+    refuse it.
   - needs-human findings: one issue per tool and reason, closed with a comment
     on the first run where the problem is gone.
   - automated/claim/* and automated/window branches without an open pull
@@ -38,7 +40,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import findings as block  # noqa: E402
 import ghapi  # noqa: E402
-from check_diff import TOOL_FILE, check_bookkeeping  # noqa: E402
+from check_diff import KUBERNETES_FILE, TOOL_FILE, check_bookkeeping, check_claim, check_window  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 LABELS = {
@@ -137,9 +139,9 @@ def close_pull(pull, comment):
 
 # --- pull request text --------------------------------------------------------
 
-def permalink(item):
-    """The finding's source at its recorded commit, where the source is a file in a GitHub repository."""
-    source, commit = item.get("source") or "", item.get("source_commit")
+def permalink(item, commit=None):
+    """The finding's source at its recorded commit (or at commit), where the source is a file in a GitHub repository."""
+    source, commit = item.get("source") or "", commit or item.get("source_commit")
     if commit and "/blob/" in source:
         parts = source.split("/blob/", 1)
         return f"{parts[0]}/blob/{commit}/{parts[1].split('/', 1)[1]}"
@@ -155,24 +157,32 @@ def value(entry, field):
     return "`" + json.dumps(entry[field], sort_keys=True).replace("|", "\\|").replace("`", "'") + "`"
 
 
+def source_links(item):
+    links = f"[at {str(item.get('source_commit') or '')[:7]}]({permalink(item)})"
+    if item.get("removed_commit"):
+        links += f", gone [at {item['removed_commit'][:7]}]({permalink(item, item['removed_commit'])})"
+    elif "removed_commit" in item:
+        links += ", no commit read today shows the removal"
+    return links
+
+
 def change_table(items):
     lines = ["| Entry | Field | Old | New | Source |", "|---|---|---|---|---|"]
     for item in items:
         fields = item["fields"] or ["(entry)"]
         for field in fields:
             lines.append(f"| {item['version']} | {field} | {value(item['old'], field)} | {value(item['new'], field)} | "
-                         f"[at {str(item.get('source_commit') or '')[:7]}]({permalink(item)}) |")
+                         f"{source_links(item)} |")
     return "\n".join(lines)
 
 
-def claim_body(tool, items, test=False):
+def claim_body(tool, items, test=False, problems=()):
     note = ("**Test fixture.** This pull request contains a deliberate mistake, to check that the review "
             "marks it `mismatch` and that it is not merged. Close it once checked.\n\n") if test else ""
-    involves_delisted = any("delisted" in item["fields"] for item in items)
     return (
         f"{note}Opened by `detect.yml`: upstream's statement for **{tool}** no longer matches the recorded data.\n\n"
         + change_table(items) + "\n\n"
-        + ("This change involves `delisted`, so it needs a maintainer to review and merge it.\n\n" if involves_delisted
+        + (f"This change needs a maintainer to review and merge it: {'; '.join(problems)}.\n\n" if problems
            else "An automated review checks each change against the source at the linked commit. "
                 "It merges only if every gate in `docs/maintainers/automation.md` passes.\n\n")
         + block.render(items)
@@ -183,6 +193,13 @@ def claim_body(tool, items, test=False):
 
 def read_data(data_dir, path):
     return (Path(data_dir) / path).read_text(encoding="utf-8")
+
+
+def gate_problems(check, path, data_dir, items):
+    """What a check_diff.py check would refuse in the change to path, compared with main as the merge gates compare it."""
+    def read_main(p):
+        return (ROOT / p).read_text(encoding="utf-8") if (ROOT / p).is_file() else None
+    return check(read_main, lambda p: read_data(data_dir, p) if p == path else read_main(p), [path], items)
 
 
 def group(items, key):
@@ -205,8 +222,9 @@ def publish_claims(report, data_dir, base):
             raise SystemExit(f"unexpected tool name {tool!r}")
         test = bool(report.get("test_fixture"))
         title = f"{'[test fixture] ' if test else ''}{tool}: upstream claim change ({len(items)} entr{'y' if len(items) == 1 else 'ies'})"
-        body = claim_body(tool, items, test)
-        labels = ["claim-change"] + (["human-merge"] if any("delisted" in i["fields"] for i in items) else [])
+        problems = gate_problems(check_claim, path, data_dir, items)
+        body = claim_body(tool, items, test, problems)
+        labels = ["claim-change"] + (["human-merge"] if problems else [])
         pull = open_pull(branch)
         rewrite = True
         if pull:
@@ -241,15 +259,19 @@ def publish_window(report, data_dir, base):
             rewrite = block.comparable(block.parse(pull["body"])) != block.comparable(items)
         except ValueError:
             pass
+    problems = gate_problems(check_window, KUBERNETES_FILE, data_dir, items)
     body = (
         "Opened by `detect.yml`: the latest three Kubernetes minors changed.\n\n"
         + change_table(items) + "\n\n"
-        + "Window changes always need a maintainer. Follow the window roll runbook in `CONTRIBUTING.md`.\n\n"
+        + (f"This change needs a maintainer: {'; '.join(problems)}. Follow the window roll runbook in `CONTRIBUTING.md`.\n\n"
+           if problems else
+           "It merges automatically once Kubernetes publishes the new minor's release and every gate in "
+           "`docs/maintainers/automation.md` passes.\n\n")
         + block.render(items)
     )
     upsert_pull("automated/window", f"Kubernetes window: {', '.join(items[0]['new']['window'])}", body,
-                ["window-change", "human-merge"], rewrite, base,
-                {"data/kubernetes.yaml": read_data(data_dir, "data/kubernetes.yaml")},
+                ["window-change"] + (["human-merge"] if problems else []), rewrite, base,
+                {KUBERNETES_FILE: read_data(data_dir, KUBERNETES_FILE)},
                 "Update the Kubernetes window\n\nOpened by detect.yml.")
 
 
