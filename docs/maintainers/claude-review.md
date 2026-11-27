@@ -13,7 +13,7 @@ All inputs are in the current directory. Read them with Read, Glob and Grep only
 - `context/findings.json`: the changes. Each finding has an `id`, the `tool`, the tool `version` (or band of versions), the `fields` that changed, the `old` and `new` values, and the `source` and `source_commit`.
 - `context/diff.patch`: the change to `data/tools/<tool>.yaml` as a diff.
 - `context/pr.json`: the pull request number, head commit and title.
-- `upstream/index.json`: for each finding `id`, the local `file` holding the upstream source at `source_commit` (and the `url` it came from), or `missing` with the reason it could not be fetched.
+- `upstream/index.json`: for each finding `id`, the local `file` holding the upstream source at `source_commit` (and the `url` it came from), or `missing` with the reason it could not be fetched. For a removal it also gives `removed_file`, the source at the finding's `removed_commit` (where the script found the row gone), and `removed_date`, that commit's date; or `removed_missing` with the reason.
 - The files `upstream/index.json` points to.
 
 ## How the data works
@@ -22,6 +22,7 @@ All inputs are in the current directory. Read them with Read, Glob and Grep only
 - `stated`: a range upstream says is **supported or expected to work**, without saying it was tested. `min` and `max` are Kubernetes minors; `max: latest` means upstream left the range open-ended; no `min` means upstream gave no lower bound. `wording` is upstream's own short phrase for the claim.
 - `unsupported`: Kubernetes minors or ranges upstream **explicitly** says are not supported or do not work.
 - `version` is the tool's release line or release; `version_range` is a band of tool versions, used only when upstream states one claim for the band.
+- `delisted` is the date a row was removed from the upstream statement. The entry keeps the last values upstream published for it.
 - Anything upstream does not say is unknown, and is not recorded.
 
 ## Checks for each finding
@@ -33,6 +34,17 @@ Open the upstream file for the finding and check the `new` values:
 3. `wording` matches upstream's own phrase.
 4. Nothing is inferred, extended or backfilled: no versions upstream does not name, no range wider than upstream's, no `stated` promoted to `tested`.
 5. The diff in `context/diff.patch` makes exactly the change the finding describes.
+
+## Checks for a removal
+
+A finding whose `new` has `delisted` and whose `old` does not is a removal: the script found that upstream no longer lists the row. Check, in addition to checks 1 to 4 for the `new` values:
+
+1. In `file` (the source at `source_commit`), upstream lists the tool version with the `new` values.
+2. In `removed_file` (the source at `removed_commit`), upstream no longer lists the tool version anywhere in the statement. If it appears in another table, under another name or inside a band of versions, or the statement looks restructured rather than shortened, the row may have moved: mark it `ambiguous`.
+3. If `new.source` differs from `old.source`, the row was read from upstream's history: `new.source` points at `source_commit`, and `delisted` is `removed_date`. Otherwise `delisted` is the date the script found the row gone; it is not checked against upstream.
+4. The diff only adds `delisted`, and for a row read from history moves `source`, `source_commit` and `verified` as the finding says.
+
+Mark a removal `ambiguous` if `removed_file` is missing.
 
 ## Verdicts
 

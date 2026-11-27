@@ -5,6 +5,7 @@ Usage:
     python scripts/check_diff.py bookkeeping BASE HEAD
     python scripts/check_diff.py claim BASE HEAD --findings findings.json
     python scripts/check_diff.py claim BASE WORKTREE --findings ...   # compare with the working tree
+    python scripts/check_diff.py window BASE HEAD --findings findings.json
 
 BASE...HEAD is compared from their merge base, as a pull request shows it.
 Exit status 0 means the diff passes; otherwise every problem is printed.
@@ -12,10 +13,16 @@ Exit status 0 means the diff passes; otherwise every problem is printed.
 bookkeeping: only `verified` and `source_commit` differ, on existing entries
     of data/tools/*.yaml and in data/kubernetes.yaml; nothing else changed.
 claim: exactly one data/tools/<tool>.yaml changed and nothing else; its header
-    is unchanged; no entry was removed; nothing involving `delisted` changed;
-    at most MAX_ENTRIES entries changed; each has an allowlisted source and a
-    full source_commit; the changed entries are exactly the findings, with the
-    findings' old and new values.
+    is unchanged; no entry was removed; at most MAX_ENTRIES entries changed;
+    each has an allowlisted source and a full source_commit; the changed
+    entries are exactly the findings, with the findings' old and new values.
+    An entry may become delisted (a removal) only if its finding names the
+    upstream commit where the row is gone, at most MAX_REMOVALS times, and
+    only while a current entry remains. Entries that are already delisted
+    never change, and no entry is added already delisted.
+window: only data/kubernetes.yaml changed, and only its window, source_commit
+    and verified; the new window is the old one rolled forward by exactly one
+    minor; the one kubernetes/window finding has the diff's old and new values.
 """
 
 import argparse
@@ -34,9 +41,13 @@ from validate import is_under  # noqa: E402
 from verify import snapshot  # noqa: E402
 
 MAX_ENTRIES = 10
+MAX_REMOVALS = 2
 BOOKKEEPING_KEYS = {"verified", "source_commit"}
+WINDOW_KEYS = {"window", "source_commit", "verified"}
+KUBERNETES_FILE = "data/kubernetes.yaml"
 TOOL_FILE = re.compile(r"data/tools/([a-z0-9][a-z0-9-]*)\.yaml")
 SHA = re.compile(r"[0-9a-f]{40}")
+MINOR = re.compile(r"1\.(\d+)")
 WORKTREE = "WORKTREE"
 
 
@@ -133,6 +144,24 @@ def check_bookkeeping(read_base, read_head, paths):
     return problems
 
 
+def removal_problems(label, prior, entry, item):
+    """Why a newly delisted entry can't merge automatically (empty if it can).
+
+    A plain removal only adds `delisted`. A row read from upstream's history may
+    also take the values, source and commit of the last commit that listed it.
+    Either way the finding must name the upstream commit where the row is gone,
+    so the review can confirm the removal.
+    """
+    if prior is None:
+        return [f"{label}: added already delisted; recovering history needs a human"]
+    problems = []
+    if not SHA.fullmatch(str(item.get("removed_commit") or "")):
+        problems.append(f"{label}: no upstream commit showing the removal")
+    if item.get("fields") == ["delisted"] and without(entry, {"delisted"}) != prior:
+        problems.append(f"{label}: changed beyond delisted")
+    return problems
+
+
 def check_claim(read_base, read_head, paths, findings, max_entries=MAX_ENTRIES):
     problems = []
     tools = {TOOL_FILE.fullmatch(p).group(1) for p in paths if TOOL_FILE.fullmatch(p)}
@@ -159,27 +188,34 @@ def check_claim(read_base, read_head, paths, findings, max_entries=MAX_ENTRIES):
     removed = sorted(set(old) - set(new))
     if removed:
         problems.append("entries removed: " + ", ".join(removed))
-    changed = []
+    claim_findings = [f for f in findings if f.get("class") == "claim"]
+    by_id = {f["id"]: f for f in claim_findings}
+    changed, removals = [], []
     for label, entry in new.items():
         prior = old.get(label)
         if prior == entry:
             continue
         changed.append(label)
-        if "delisted" in entry or (prior and "delisted" in prior):
-            problems.append(f"{label}: involves delisted")
+        if prior and "delisted" in prior:
+            problems.append(f"{label}: changes an entry that is already delisted")
+        elif "delisted" in entry:
+            removals.append(label)
+            problems += removal_problems(label, prior, entry, by_id.get(f"{tool}/{label}") or {})
         if not any(is_under(entry["source"], prefix) for prefix in allowed):
             problems.append(f"{label}: source {entry['source']} is not under the tool's repo or official_sources")
         if not SHA.fullmatch(str(entry.get("source_commit", ""))):
             problems.append(f"{label}: no full source_commit")
     if len(changed) > max_entries:
         problems.append(f"{len(changed)} entries changed; the limit is {max_entries}")
+    if len(removals) > MAX_REMOVALS:
+        problems.append(f"{len(removals)} entries delisted; the limit is {MAX_REMOVALS}")
+    if removals and all("delisted" in r for r in head_doc["releases"]):
+        problems.append("every entry would be delisted")
 
-    claim_findings = [f for f in findings if f.get("class") == "claim"]
     if len(claim_findings) != len(findings):
         problems.append("findings include classes other than claim")
     if any(f.get("tool") != tool for f in findings):
         problems.append(f"findings name a tool other than {tool}")
-    by_id = {f["id"]: f for f in claim_findings}
     expected = {f"{tool}/{label}" for label in changed}
     if set(by_id) != expected or len(by_id) != len(claim_findings):
         problems.append(f"changed entries {sorted(expected)} do not match findings {sorted(by_id)}")
@@ -191,12 +227,51 @@ def check_claim(read_base, read_head, paths, findings, max_entries=MAX_ENTRIES):
     return problems
 
 
+def rolled(window):
+    """The window after the next Kubernetes minor is released, or None if window isn't three consecutive minors."""
+    if not (isinstance(window, list) and len(window) == 3 and all(isinstance(m, str) and MINOR.fullmatch(m) for m in window)):
+        return None
+    numbers = [int(MINOR.fullmatch(m).group(1)) for m in window]
+    if numbers != [numbers[0], numbers[0] - 1, numbers[0] - 2]:
+        return None
+    return [f"1.{numbers[0] + 1}", window[0], window[1]]
+
+
+def check_window(read_base, read_head, paths, findings):
+    if paths != [KUBERNETES_FILE]:
+        return [f"expected only {KUBERNETES_FILE} to change, found: {', '.join(paths) or 'nothing'}"]
+    before, after = read_base(KUBERNETES_FILE), read_head(KUBERNETES_FILE)
+    if before is None or after is None:
+        return [f"{KUBERNETES_FILE}: added or removed"]
+    problems = []
+    strip = lambda t: [l for l in t.splitlines() if not re.match(r"(window|source_commit|verified):", l)]  # noqa: E731
+    if strip(before) != strip(after):
+        problems.append(f"{KUBERNETES_FILE}: text changed outside window, source_commit and verified")
+    try:
+        old, new = parse(before), parse(after)
+    except yaml.YAMLError as exc:
+        return problems + [f"{KUBERNETES_FILE}: cannot read ({exc})"]
+    if without(old, WINDOW_KEYS) != without(new, WINDOW_KEYS):
+        problems.append(f"{KUBERNETES_FILE}: keys other than window, source_commit and verified changed")
+    expected = rolled(old.get("window"))
+    if expected is None or new.get("window") != expected:
+        problems.append(f"window {new.get('window')} is not {old.get('window')} rolled forward by one minor")
+    if not SHA.fullmatch(str(new.get("source_commit", ""))):
+        problems.append(f"{KUBERNETES_FILE}: source_commit is not a full commit")
+    if [(f.get("id"), f.get("class")) for f in findings] != [("kubernetes/window", "window")]:
+        problems.append("findings are not the one kubernetes/window finding")
+    elif (findings[0].get("old") != {"window": old.get("window"), "source_commit": old.get("source_commit")}
+          or findings[0].get("new") != {"window": new.get("window"), "source_commit": new.get("source_commit")}):
+        problems.append("diff does not match the finding's old and new values")
+    return problems
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("kind", choices=["bookkeeping", "claim"])
+    parser.add_argument("kind", choices=["bookkeeping", "claim", "window"])
     parser.add_argument("base")
     parser.add_argument("head", help=f"a ref, or {WORKTREE} for the working tree")
-    parser.add_argument("--findings", help="JSON file with the pull request's findings (claim only)")
+    parser.add_argument("--findings", help="JSON file with the pull request's findings (claim and window)")
     parser.add_argument("--repo-dir", default=".", help="git checkout to read from (default: current directory)")
     args = parser.parse_args()
 
@@ -207,9 +282,10 @@ def main():
         problems = check_bookkeeping(read_base, read_head, paths)
     else:
         if not args.findings:
-            parser.error("claim needs --findings")
+            parser.error(f"{args.kind} needs --findings")
         with open(args.findings, encoding="utf-8") as handle:
-            problems = check_claim(read_base, read_head, paths, json.load(handle))
+            check = check_claim if args.kind == "claim" else check_window
+            problems = check(read_base, read_head, paths, json.load(handle))
     for problem in problems:
         print(f"refused: {problem}")
     if not problems:

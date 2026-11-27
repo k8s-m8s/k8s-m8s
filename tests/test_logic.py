@@ -176,6 +176,12 @@ class ReconcileTest(unittest.TestCase):
         return {"version": "1.0", "tested": ["1.35"], "source": "https://e.org/a/ccccccc",
                 "source_commit": "ccccccc", "delisted": "2026-11-20"}
 
+    def test_apply_never_writes_the_removal_commit_into_data(self):
+        releases = []
+        reconcile(releases, [{**self.history_row(), "removed_commit": "d" * 40}], self.TODAY, "apply")
+        self.assertEqual(len(releases), 1)
+        self.assertNotIn("removed_commit", releases[0])
+
     def test_apply_takes_over_a_row_upstream_history_delists(self):
         releases = self.recorded()[2:]
         _, differences, problems = reconcile(releases, [self.history_row()], self.TODAY, "apply")

@@ -16,6 +16,11 @@ on:
         description: "Test only: instead of reading upstream, open a claim PR for this tool with a deliberate mistake"
         type: string
         default: ""
+      fixture_kind:
+        description: "Test only: the mistake, a claim upstream does not state or a removal upstream did not make"
+        type: choice
+        options: [claim, removal]
+        default: claim
 
 permissions: {}
 
@@ -45,10 +50,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           FIXTURE: ${{ inputs.fixture }}
+          FIXTURE_KIND: ${{ inputs.fixture_kind }}
         run: |
           mkdir -p "$RUNNER_TEMP/out"
           if [ -n "$FIXTURE" ]; then
-            python scripts/test_fixture.py --tool "$FIXTURE" --report-json "$RUNNER_TEMP/out/report.json"
+            python scripts/test_fixture.py --tool "$FIXTURE" --kind "${FIXTURE_KIND:-claim}" --report-json "$RUNNER_TEMP/out/report.json"
           else
             python scripts/verify.py --claims-only --report-json "$RUNNER_TEMP/out/report.json"
           fi

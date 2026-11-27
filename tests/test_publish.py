@@ -65,7 +65,7 @@ class IssueTest(unittest.TestCase):
 
 
 class ClaimPullTest(unittest.TestCase):
-    def run_claims(self, items, existing_body=None, state="clean"):
+    def run_claims(self, items, existing_body=None, state="clean", problems=()):
         report = {"checked": ["velero"], "findings": items}
         pull = None if existing_body is None else {"number": 4, "body": existing_body, "title": "t", "user": BOT,
                                                     "head": {"ref": "automated/claim/velero", "repo": {"full_name": ENV["GITHUB_REPOSITORY"]}}}
@@ -73,6 +73,7 @@ class ClaimPullTest(unittest.TestCase):
                 mock.patch.object(publish, "open_pull", return_value=pull), \
                 mock.patch.object(publish.ghapi, "get", return_value={"mergeable_state": state}), \
                 mock.patch.object(publish, "read_data", return_value="text"), \
+                mock.patch.object(publish, "gate_problems", return_value=list(problems)), \
                 mock.patch.object(publish, "upsert_pull") as upsert, \
                 mock.patch.object(publish, "close_pull") as close, \
                 redirect_stdout(io.StringIO()):
@@ -93,16 +94,51 @@ class ClaimPullTest(unittest.TestCase):
         upsert, _ = self.run_claims(items, block.render(items), state="dirty")
         self.assertIs(upsert.call_args.args[4], True)
 
-    def test_delisted_changes_are_labelled_for_a_human(self):
-        item = claim()
-        item["fields"] = ["delisted"]
-        upsert, _ = self.run_claims([item])
+    def test_a_change_the_claim_gate_would_refuse_is_labelled_for_a_human(self):
+        upsert, _ = self.run_claims([claim()], problems=["1.0: changes an entry that is already delisted"])
         self.assertIn("human-merge", upsert.call_args.args[3])
+        self.assertIn("already delisted", upsert.call_args.args[2])
+
+    def test_a_removal_the_gate_accepts_goes_to_the_review(self):
+        item = claim()
+        item.update(fields=["delisted"], new={**item["old"], "delisted": "2026-12-01"}, removed_commit="e" * 40)
+        upsert, _ = self.run_claims([item])
+        self.assertEqual(upsert.call_args.args[3], ["claim-change"])
+        self.assertIn("gone [at eeeeeee]", upsert.call_args.args[2])
+
+    def test_gate_problems_reads_main_and_the_new_file(self):
+        with mock.patch.object(publish, "read_data", return_value="new text"):
+            seen = publish.gate_problems(lambda read_base, read_head, paths, items: [read_head(paths[0]), paths],
+                                         "data/tools/velero.yaml", "unused", [])
+        self.assertEqual(seen, ["new text", ["data/tools/velero.yaml"]])
 
     def test_a_tool_that_matches_again_closes_its_pull_request(self):
         upsert, close = self.run_claims([], block.render([claim()]))
         upsert.assert_not_called()
         close.assert_called_once()
+
+    def run_window(self, problems=()):
+        item = {"id": "kubernetes/window", "tool": "kubernetes", "version": "window", "class": "window",
+                "fields": ["window"], "source": "https://kubernetes.io/releases/", "source_commit": "c" * 40,
+                "old": {"window": ["1.37", "1.36", "1.35"], "source_commit": "a" * 40},
+                "new": {"window": ["1.38", "1.37", "1.36"], "source_commit": "c" * 40}, "message": "m"}
+        with mock.patch.dict(os.environ, ENV), \
+                mock.patch.object(publish, "open_pull", return_value=None), \
+                mock.patch.object(publish, "read_data", return_value="text"), \
+                mock.patch.object(publish, "gate_problems", return_value=list(problems)), \
+                mock.patch.object(publish, "upsert_pull") as upsert, \
+                redirect_stdout(io.StringIO()):
+            publish.publish_window({"checked": ["kubernetes"], "findings": [item]}, "unused", "b" * 40)
+        return upsert
+
+    def test_a_window_roll_is_not_labelled_for_a_human(self):
+        upsert = self.run_window()
+        self.assertEqual(upsert.call_args.args[3], ["window-change"])
+        self.assertIn("merges automatically", upsert.call_args.args[2])
+
+    def test_a_window_change_the_gate_would_refuse_is_labelled(self):
+        upsert = self.run_window(problems=["window is not rolled forward by one minor"])
+        self.assertEqual(upsert.call_args.args[3], ["window-change", "human-merge"])
 
     def test_only_data_files_are_committed(self):
         with self.assertRaises(SystemExit):
