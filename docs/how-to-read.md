@@ -31,7 +31,7 @@ Each cell answers one question: what have this tool's maintainers said about run
 
 Only from each tool's own repository, documentation or release notes. Every row on a tool page links to the upstream statement as it stood at the commit it was read from, and the top of each tool page shows when upstream was last checked. The link is permanent, so it keeps matching the row even after the project edits its page; follow it to GitHub to see the current version. Nothing is inferred from dependency versions, CI configuration or other people's data sets.
 
-The data is checked daily against each tool's own repository. When a project changes its statement, the change is proposed with links to the source. An automated review checks it against the upstream file at the recorded commit before it is published, including rows a project has removed. A new Kubernetes version is added to the matrix once Kubernetes has published its release. Maintainers review anything the review or the checks flag. The matrix page shows when upstream was last checked, and names any tool whose check is behind because a change or a problem is waiting for review.
+The data is checked daily against each tool's own repository. When a project changes its statement, the change is proposed with links to the source. An automated review checks it against the upstream file at the recorded commit before it is published, including rows a project has removed. A new Kubernetes version is added to the matrix once Kubernetes has published its release. Maintainers review anything the review or the checks flag. The matrix page shows when upstream was last checked, and names any tool that is behind because its upstream statement changed or could not be read since.
 
 ## History
 
