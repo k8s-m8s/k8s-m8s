@@ -21,7 +21,7 @@ releases:
       wording: support matrix
     source: https://github.com/kubernetes-sigs/cluster-api/blob/main/docs/book/src/reference/versions.md#core-provider-cluster-api-controller
     source_commit: bd2610c07f98b3445757abed2c4b1690281c8fb6
-    verified: 2026-11-27
+    verified: 2026-11-28
   - version: "1.14"
     stated:
       min: "1.33"
@@ -29,7 +29,7 @@ releases:
       wording: support matrix
     source: https://github.com/kubernetes-sigs/cluster-api/blob/main/docs/book/src/reference/versions.md#core-provider-cluster-api-controller
     source_commit: bd2610c07f98b3445757abed2c4b1690281c8fb6
-    verified: 2026-11-27
+    verified: 2026-11-28
   - version: "1.13"
     stated:
       min: "1.32"
@@ -37,4 +37,4 @@ releases:
       wording: support matrix
     source: https://github.com/kubernetes-sigs/cluster-api/blob/main/docs/book/src/reference/versions.md#core-provider-cluster-api-controller
     source_commit: bd2610c07f98b3445757abed2c4b1690281c8fb6
-    verified: 2026-11-27
+    verified: 2026-11-28
