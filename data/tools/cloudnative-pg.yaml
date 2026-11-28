@@ -19,7 +19,7 @@ releases:
       wording: Supported Kubernetes versions
     source: https://github.com/cloudnative-pg/cloudnative-pg/blob/main/docs/src/supported_releases.md
     source_commit: 62303c5680b8d61ae89b33d4a417e74faa50afa7
-    verified: 2026-11-27
+    verified: 2026-11-28
   - version: "1.29"
     stated:
       min: "1.33"
@@ -27,7 +27,7 @@ releases:
       wording: Supported Kubernetes versions
     source: https://github.com/cloudnative-pg/cloudnative-pg/blob/main/docs/src/supported_releases.md
     source_commit: 62303c5680b8d61ae89b33d4a417e74faa50afa7
-    verified: 2026-11-27
+    verified: 2026-11-28
   - version: "1.28"
     stated:
       min: "1.32"
@@ -35,7 +35,7 @@ releases:
       wording: Supported Kubernetes versions
     source: https://github.com/cloudnative-pg/cloudnative-pg/blob/main/docs/src/supported_releases.md
     source_commit: 62303c5680b8d61ae89b33d4a417e74faa50afa7
-    verified: 2026-11-27
+    verified: 2026-11-28
   - version: "1.27"
     stated:
       min: "1.31"
@@ -43,7 +43,7 @@ releases:
       wording: Supported Kubernetes versions
     source: https://github.com/cloudnative-pg/cloudnative-pg/blob/main/docs/src/supported_releases.md
     source_commit: 62303c5680b8d61ae89b33d4a417e74faa50afa7
-    verified: 2026-11-27
+    verified: 2026-11-28
   - version: "1.26"
     stated:
       min: "1.30"
@@ -51,7 +51,7 @@ releases:
       wording: Supported Kubernetes versions
     source: https://github.com/cloudnative-pg/cloudnative-pg/blob/main/docs/src/supported_releases.md
     source_commit: 62303c5680b8d61ae89b33d4a417e74faa50afa7
-    verified: 2026-11-27
+    verified: 2026-11-28
   - version: "1.25"
     stated:
       min: "1.29"
@@ -59,7 +59,7 @@ releases:
       wording: Supported Kubernetes versions
     source: https://github.com/cloudnative-pg/cloudnative-pg/blob/main/docs/src/supported_releases.md
     source_commit: 62303c5680b8d61ae89b33d4a417e74faa50afa7
-    verified: 2026-11-27
+    verified: 2026-11-28
   - version: "1.24"
     stated:
       min: "1.28"
@@ -67,7 +67,7 @@ releases:
       wording: Supported Kubernetes versions
     source: https://github.com/cloudnative-pg/cloudnative-pg/blob/main/docs/src/supported_releases.md
     source_commit: 62303c5680b8d61ae89b33d4a417e74faa50afa7
-    verified: 2026-11-27
+    verified: 2026-11-28
   - version: "1.23"
     stated:
       min: "1.27"
@@ -75,7 +75,7 @@ releases:
       wording: Supported Kubernetes versions
     source: https://github.com/cloudnative-pg/cloudnative-pg/blob/main/docs/src/supported_releases.md
     source_commit: 62303c5680b8d61ae89b33d4a417e74faa50afa7
-    verified: 2026-11-27
+    verified: 2026-11-28
   - version: "1.22"
     stated:
       min: "1.26"
@@ -83,7 +83,7 @@ releases:
       wording: Supported Kubernetes versions
     source: https://github.com/cloudnative-pg/cloudnative-pg/blob/main/docs/src/supported_releases.md
     source_commit: 62303c5680b8d61ae89b33d4a417e74faa50afa7
-    verified: 2026-11-27
+    verified: 2026-11-28
   - version: "1.21"
     stated:
       min: "1.25"
@@ -91,7 +91,7 @@ releases:
       wording: Supported Kubernetes versions
     source: https://github.com/cloudnative-pg/cloudnative-pg/blob/main/docs/src/supported_releases.md
     source_commit: 62303c5680b8d61ae89b33d4a417e74faa50afa7
-    verified: 2026-11-27
+    verified: 2026-11-28
   - version: "1.20"
     stated:
       min: "1.24"
@@ -99,7 +99,7 @@ releases:
       wording: Supported Kubernetes versions
     source: https://github.com/cloudnative-pg/cloudnative-pg/blob/main/docs/src/supported_releases.md
     source_commit: 62303c5680b8d61ae89b33d4a417e74faa50afa7
-    verified: 2026-11-27
+    verified: 2026-11-28
   - version: "1.19"
     stated:
       min: "1.23"
@@ -107,7 +107,7 @@ releases:
       wording: Supported Kubernetes versions
     source: https://github.com/cloudnative-pg/cloudnative-pg/blob/main/docs/src/supported_releases.md
     source_commit: 62303c5680b8d61ae89b33d4a417e74faa50afa7
-    verified: 2026-11-27
+    verified: 2026-11-28
   - version: "1.18"
     stated:
       min: "1.23"
@@ -115,7 +115,7 @@ releases:
       wording: Supported Kubernetes versions
     source: https://github.com/cloudnative-pg/cloudnative-pg/blob/main/docs/src/supported_releases.md
     source_commit: 62303c5680b8d61ae89b33d4a417e74faa50afa7
-    verified: 2026-11-27
+    verified: 2026-11-28
   - version: "1.17"
     stated:
       min: "1.22"
@@ -123,7 +123,7 @@ releases:
       wording: Supported Kubernetes versions
     source: https://github.com/cloudnative-pg/cloudnative-pg/blob/main/docs/src/supported_releases.md
     source_commit: 62303c5680b8d61ae89b33d4a417e74faa50afa7
-    verified: 2026-11-27
+    verified: 2026-11-28
   - version: "1.16"
     stated:
       min: "1.22"
@@ -131,7 +131,7 @@ releases:
       wording: Supported Kubernetes versions
     source: https://github.com/cloudnative-pg/cloudnative-pg/blob/main/docs/src/supported_releases.md
     source_commit: 62303c5680b8d61ae89b33d4a417e74faa50afa7
-    verified: 2026-11-27
+    verified: 2026-11-28
   - version: "1.15"
     stated:
       min: "1.21"
@@ -139,4 +139,4 @@ releases:
       wording: Supported Kubernetes versions
     source: https://github.com/cloudnative-pg/cloudnative-pg/blob/main/docs/src/supported_releases.md
     source_commit: 62303c5680b8d61ae89b33d4a417e74faa50afa7
-    verified: 2026-11-27
+    verified: 2026-11-28

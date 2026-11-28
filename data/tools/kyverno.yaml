@@ -24,7 +24,7 @@ releases:
       wording: Kubernetes Versions Supported
     source: https://github.com/kyverno/website/blob/main/src/content/docs/docs/installation/releases.md
     source_commit: 241122ad901e9e7ff8f14136d7969677c7915073
-    verified: 2026-11-27
+    verified: 2026-11-28
   - version: "1.19"
     stated:
       min: "1.33"
@@ -32,7 +32,7 @@ releases:
       wording: Kubernetes Versions Supported
     source: https://github.com/kyverno/website/blob/1ef341b470090c55699ca845b033d42107dd9a79/src/content/docs/docs/installation/releases.md
     source_commit: 1ef341b470090c55699ca845b033d42107dd9a79
-    verified: 2026-11-27
+    verified: 2026-11-28
     delisted: 2026-11-08
   - version: "1.18"
     stated:
@@ -41,7 +41,7 @@ releases:
       wording: Kubernetes Versions Supported
     source: https://github.com/kyverno/website/blob/049be5c9e8d7af5cac074f2a4b7cb0603001a295/src/content/docs/docs/installation/releases.md
     source_commit: 049be5c9e8d7af5cac074f2a4b7cb0603001a295
-    verified: 2026-11-27
+    verified: 2026-11-28
     delisted: 2026-08-19
   - version: "1.17"
     stated:
@@ -50,5 +50,5 @@ releases:
       wording: Kubernetes Versions Supported
     source: https://github.com/kyverno/website/blob/6a1b021f986a32e3a870c5a4b87f51462c6f59f1/src/content/docs/docs/installation/releases.md
     source_commit: 6a1b021f986a32e3a870c5a4b87f51462c6f59f1
-    verified: 2026-11-27
+    verified: 2026-11-28
     delisted: 2026-04-30

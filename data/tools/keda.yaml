@@ -17,74 +17,74 @@ releases:
     tested: ["1.34", "1.35", "1.36"]
     source: https://github.com/kedacore/keda-docs/blob/main/content/docs/2.21/operate/cluster.md
     source_commit: a4c740d54a1dd6c8d9be27a347bf4d04a6b2f3d6
-    verified: 2026-11-27
+    verified: 2026-11-28
   - version: "2.20"
     tested: ["1.33", "1.34", "1.35"]
     source: https://github.com/kedacore/keda-docs/blob/main/content/docs/2.21/operate/cluster.md
     source_commit: a4c740d54a1dd6c8d9be27a347bf4d04a6b2f3d6
-    verified: 2026-11-27
+    verified: 2026-11-28
   - version: "2.19"
     tested: ["1.32", "1.33", "1.34"]
     source: https://github.com/kedacore/keda-docs/blob/main/content/docs/2.21/operate/cluster.md
     source_commit: a4c740d54a1dd6c8d9be27a347bf4d04a6b2f3d6
-    verified: 2026-11-27
+    verified: 2026-11-28
   - version: "2.18"
     tested: ["1.31", "1.32", "1.33"]
     source: https://github.com/kedacore/keda-docs/blob/main/content/docs/2.21/operate/cluster.md
     source_commit: a4c740d54a1dd6c8d9be27a347bf4d04a6b2f3d6
-    verified: 2026-11-27
+    verified: 2026-11-28
   - version: "2.17"
     tested: ["1.30", "1.31", "1.32"]
     source: https://github.com/kedacore/keda-docs/blob/main/content/docs/2.21/operate/cluster.md
     source_commit: a4c740d54a1dd6c8d9be27a347bf4d04a6b2f3d6
-    verified: 2026-11-27
+    verified: 2026-11-28
   - version: "2.16"
     tested: ["1.29", "1.30", "1.31"]
     source: https://github.com/kedacore/keda-docs/blob/main/content/docs/2.21/operate/cluster.md
     source_commit: a4c740d54a1dd6c8d9be27a347bf4d04a6b2f3d6
-    verified: 2026-11-27
+    verified: 2026-11-28
   - version: "2.15"
     tested: ["1.28", "1.29", "1.30"]
     source: https://github.com/kedacore/keda-docs/blob/main/content/docs/2.21/operate/cluster.md
     source_commit: a4c740d54a1dd6c8d9be27a347bf4d04a6b2f3d6
-    verified: 2026-11-27
+    verified: 2026-11-28
   - version: "2.14"
     tested: ["1.27", "1.28", "1.29"]
     source: https://github.com/kedacore/keda-docs/blob/main/content/docs/2.21/operate/cluster.md
     source_commit: a4c740d54a1dd6c8d9be27a347bf4d04a6b2f3d6
-    verified: 2026-11-27
+    verified: 2026-11-28
   - version: "2.13"
     tested: ["1.27", "1.28", "1.29"]
     source: https://github.com/kedacore/keda-docs/blob/main/content/docs/2.21/operate/cluster.md
     source_commit: a4c740d54a1dd6c8d9be27a347bf4d04a6b2f3d6
-    verified: 2026-11-27
+    verified: 2026-11-28
   - version: "2.12"
     tested: ["1.26", "1.27", "1.28"]
     source: https://github.com/kedacore/keda-docs/blob/main/content/docs/2.21/operate/cluster.md
     source_commit: a4c740d54a1dd6c8d9be27a347bf4d04a6b2f3d6
-    verified: 2026-11-27
+    verified: 2026-11-28
   - version: "2.11"
     tested: ["1.25", "1.26", "1.27"]
     source: https://github.com/kedacore/keda-docs/blob/main/content/docs/2.21/operate/cluster.md
     source_commit: a4c740d54a1dd6c8d9be27a347bf4d04a6b2f3d6
-    verified: 2026-11-27
+    verified: 2026-11-28
   - version: "2.10"
     tested: ["1.24", "1.25", "1.26"]
     source: https://github.com/kedacore/keda-docs/blob/main/content/docs/2.21/operate/cluster.md
     source_commit: a4c740d54a1dd6c8d9be27a347bf4d04a6b2f3d6
-    verified: 2026-11-27
+    verified: 2026-11-28
   - version: "2.9"
     tested: ["1.23", "1.24", "1.25"]
     source: https://github.com/kedacore/keda-docs/blob/main/content/docs/2.21/operate/cluster.md
     source_commit: a4c740d54a1dd6c8d9be27a347bf4d04a6b2f3d6
-    verified: 2026-11-27
+    verified: 2026-11-28
   - version: "2.8"
     tested: ["1.17", "1.18", "1.19", "1.20", "1.21", "1.22", "1.23", "1.24", "1.25"]
     source: https://github.com/kedacore/keda-docs/blob/main/content/docs/2.21/operate/cluster.md
     source_commit: a4c740d54a1dd6c8d9be27a347bf4d04a6b2f3d6
-    verified: 2026-11-27
+    verified: 2026-11-28
   - version: "2.7"
     tested: ["1.17", "1.18", "1.19", "1.20", "1.21", "1.22", "1.23", "1.24", "1.25"]
     source: https://github.com/kedacore/keda-docs/blob/main/content/docs/2.21/operate/cluster.md
     source_commit: a4c740d54a1dd6c8d9be27a347bf4d04a6b2f3d6
-    verified: 2026-11-27
+    verified: 2026-11-28

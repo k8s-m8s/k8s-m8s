@@ -20,7 +20,7 @@ releases:
       wording: Compatibility Matrix
     source: https://github.com/aws/karpenter-provider-aws/blob/main/website/content/en/docs/upgrading/compatibility.md
     source_commit: 75a800f98d5b27edbc18d62c0418f4eaa7273736
-    verified: 2026-11-27
+    verified: 2026-11-28
   - version_range:
       min: "1.13"
       max: "1.14"
@@ -30,7 +30,7 @@ releases:
       wording: Compatibility Matrix
     source: https://github.com/aws/karpenter-provider-aws/blob/main/website/content/en/docs/upgrading/compatibility.md
     source_commit: 75a800f98d5b27edbc18d62c0418f4eaa7273736
-    verified: 2026-11-27
+    verified: 2026-11-28
   - version_range:
       min: "1.9"
       max: "1.12"
@@ -40,7 +40,7 @@ releases:
       wording: Compatibility Matrix
     source: https://github.com/aws/karpenter-provider-aws/blob/main/website/content/en/docs/upgrading/compatibility.md
     source_commit: 75a800f98d5b27edbc18d62c0418f4eaa7273736
-    verified: 2026-11-27
+    verified: 2026-11-28
   - version_range:
       min: "1.6"
       max: "1.8"
@@ -50,7 +50,7 @@ releases:
       wording: Compatibility Matrix
     source: https://github.com/aws/karpenter-provider-aws/blob/main/website/content/en/docs/upgrading/compatibility.md
     source_commit: 75a800f98d5b27edbc18d62c0418f4eaa7273736
-    verified: 2026-11-27
+    verified: 2026-11-28
   - version: "1.5"
     stated:
       min: "1.31"
@@ -58,7 +58,7 @@ releases:
       wording: Compatibility Matrix
     source: https://github.com/aws/karpenter-provider-aws/blob/main/website/content/en/docs/upgrading/compatibility.md
     source_commit: 75a800f98d5b27edbc18d62c0418f4eaa7273736
-    verified: 2026-11-27
+    verified: 2026-11-28
   - version_range:
       min: "1.2"
       max: "1.4"
@@ -68,7 +68,7 @@ releases:
       wording: Compatibility Matrix
     source: https://github.com/aws/karpenter-provider-aws/blob/main/website/content/en/docs/upgrading/compatibility.md
     source_commit: 75a800f98d5b27edbc18d62c0418f4eaa7273736
-    verified: 2026-11-27
+    verified: 2026-11-28
   - version_range:
       min: "1.0.5"
       max: "1.1"
@@ -78,4 +78,4 @@ releases:
       wording: Compatibility Matrix
     source: https://github.com/aws/karpenter-provider-aws/blob/main/website/content/en/docs/upgrading/compatibility.md
     source_commit: 75a800f98d5b27edbc18d62c0418f4eaa7273736
-    verified: 2026-11-27
+    verified: 2026-11-28
